@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 
 import { useEffect, useState } from "react";
-import { Truck } from "lucide-react";
+import { Truck, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/lib/store";
 import type { Role } from "@/lib/types";
 import { roleLabel } from "@/lib/rbac";
@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("Transit@123");
   const [role, setRole] = useState<Role>("FleetManager");
   const [remember, setRemember] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Map of email -> failed attempts
   const [attemptsMap, setAttemptsMap] = useState<Record<string, number>>({});
@@ -120,8 +121,13 @@ export default function LoginPage() {
               </div>
               <div>
                 <label className="label-caps block mb-1.5">Password</label>
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-10 rounded-md border border-line bg-canvas px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/50" />
+                <div className="relative">
+                  <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)}
+                    className="w-full h-10 rounded-md border border-line bg-canvas pl-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-ring/50" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate hover:text-ink">
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="label-caps block mb-1.5">Role (RBAC)</label>
