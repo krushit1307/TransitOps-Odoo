@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { StatusPill } from "@/components/status-pill";
 import { useAuth, useData } from "@/lib/store";
 import { can } from "@/lib/rbac";
-import { AlertTriangle, ArrowRight } from "lucide-react";
+import { AlertTriangle, ArrowRight, Download } from "lucide-react";
+import { toast } from "sonner";
 
 
 
@@ -67,7 +67,15 @@ export default function MaintenancePage() {
                 <option value="Completed">Completed</option>
               </select>
             </div>
-            <button disabled={readOnly} onClick={() => { addMaintenance(form); setForm({ ...form, cost: 0 }); }}
+            <button disabled={readOnly} onClick={() => { 
+                const res = addMaintenance(form); 
+                if (res.ok) {
+                  setForm({ ...form, cost: 0 });
+                  toast.success("Maintenance record added");
+                } else {
+                  toast.error(res.error);
+                }
+              }}
               className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40">
               Save Record
             </button>
