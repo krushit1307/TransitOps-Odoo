@@ -4,8 +4,9 @@ import { PageHeader } from "@/components/app-shell";
 import { StatusPill } from "@/components/status-pill";
 import { useAuth, useData } from "@/lib/store";
 import { can } from "@/lib/rbac";
-import { Plus, X, Download } from "lucide-react";
+import { Plus, X, Download, FileText } from "lucide-react";
 import { downloadCSV } from "@/lib/csv";
+import { downloadPDF } from "@/lib/pdf";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function ExpensesPage() {
@@ -68,6 +69,45 @@ export default function ExpensesPage() {
     );
   };
 
+  const handleExportFuelPDF = () => {
+    downloadPDF(
+      fuel,
+      [
+        { key: "id", label: "Fuel Log ID" },
+        {
+          key: "vehicleId",
+          label: "Vehicle",
+          transform: (vId) => vehicles.find((x) => x.id === vId)?.regNo || "Unknown",
+        },
+        { key: "date", label: "Date" },
+        { key: "liters", label: "Liters", transform: (v) => `${v} L` },
+        { key: "cost", label: "Cost (INR)", transform: (v) => `Rs ${v}` },
+      ],
+      "fuel_logs"
+    );
+  };
+
+  const handleExportExpensesPDF = () => {
+    downloadPDF(
+      expenses,
+      [
+        { key: "id", label: "Expense ID" },
+        { key: "tripId", label: "Trip ID" },
+        {
+          key: "vehicleId",
+          label: "Vehicle",
+          transform: (vId) => vehicles.find((x) => x.id === vId)?.regNo || "Unknown",
+        },
+        { key: "toll", label: "Toll", transform: (v) => `Rs ${v}` },
+        { key: "other", label: "Other", transform: (v) => `Rs ${v}` },
+        { key: "maintenanceLinkedCost", label: "Maint.", transform: (v) => `Rs ${v}` },
+        { key: "total", label: "Total", transform: (v) => `Rs ${v}` },
+        { key: "status", label: "Status" },
+      ],
+      "other_expenses"
+    );
+  };
+
   return (
     <div>
       <PageHeader
@@ -75,13 +115,22 @@ export default function ExpensesPage() {
         subtitle="Fuel consumption, tolls, and linked maintenance costs — rolled up automatically."
         actions={
           <div className="flex items-center gap-2">
-            <button onClick={handleExportFuelCSV}
+            <button onClick={handleExportFuelCSV} title="CSV: Fuel"
               className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-line text-sm hover:bg-secondary/50 transition">
-              <Download className="h-4 w-4" /> Export Fuel Logs
+              <Download className="h-4 w-4" /> CSV
             </button>
-            <button onClick={handleExportExpensesCSV}
+            <button onClick={handleExportFuelPDF} title="PDF: Fuel"
+              className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-line text-sm text-primary hover:bg-primary/5 transition">
+              <FileText className="h-4 w-4" /> PDF
+            </button>
+            <div className="h-5 w-px bg-line mx-1" />
+            <button onClick={handleExportExpensesCSV} title="CSV: Expenses"
               className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-line text-sm hover:bg-secondary/50 transition">
-              <Download className="h-4 w-4" /> Export Expenses
+              <Download className="h-4 w-4" /> CSV
+            </button>
+            <button onClick={handleExportExpensesPDF} title="PDF: Expenses"
+              className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-line text-sm text-primary hover:bg-primary/5 transition">
+              <FileText className="h-4 w-4" /> PDF
             </button>
             {!readOnly && (
               <>

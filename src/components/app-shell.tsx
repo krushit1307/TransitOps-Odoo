@@ -2,11 +2,12 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Truck, Users, Route as RouteIcon, Wrench,
   Receipt, BarChart3, Settings as SettingsIcon, Search, LogOut,
+  Sun, Moon, Bell
 } from "lucide-react";
 import { useAuth, useData } from "@/lib/store";
 import { can, roleLabel, type Module } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 interface NavItem { to: string; label: string; icon: typeof Truck; mod: Module | null }
 
@@ -29,6 +30,25 @@ export function AppShell({ children }: { children: ReactNode }) {
   const _rbacMatrix = useData((s) => s.rbacMatrix); // force subscription to trigger sidebar re-render on access changes
 
   const initials = user?.name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase() ?? "OP";
+
+  const [isDark, setIsDark] = useState(() => localStorage.getItem("theme") === "dark");
+  const [showNotifs, setShowNotifs] = useState(false);
+
+  const drivers = useData((s) => s.drivers);
+  const expiringDrivers = drivers.filter(d => {
+    const diffDays = Math.ceil((new Date(d.licenseExpiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    return diffDays <= 30; // Expired or expiring within 30 days
+  });
+
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [isDark]);
 
   return (
     <div className="min-h-screen flex">
@@ -94,6 +114,50 @@ export function AppShell({ children }: { children: ReactNode }) {
             />
           </div>
           <div className="ml-auto flex items-center gap-3">
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifs(!showNotifs)}
+                className="p-1.5 rounded-full hover:bg-secondary text-slate hover:text-ink transition-colors relative"
+              >
+                <Bell className="h-4 w-4" />
+                {expiringDrivers.length > 0 && (
+                  <span className="absolute top-1 right-1.5 h-2 w-2 rounded-full bg-danger animate-pulse" />
+                )}
+              </button>
+              {showNotifs && (
+                <div className="absolute top-full right-0 mt-2 w-72 bg-surface border border-line rounded-xl shadow-lg z-50 overflow-hidden flex flex-col">
+                  <div className="px-4 py-3 border-b border-line bg-secondary/30 flex justify-between items-center">
+                    <h4 className="text-sm font-semibold">Alerts</h4>
+                    <span className="text-[10px] font-mono bg-danger/10 text-danger px-2 py-0.5 rounded-full">{expiringDrivers.length} pending</span>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto">
+                    {expiringDrivers.length === 0 ? (
+                      <div className="p-4 text-center text-sm text-slate">No alerts</div>
+                    ) : (
+                      expiringDrivers.map(d => {
+                        const days = Math.ceil((new Date(d.licenseExpiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                        return (
+                          <div key={d.id} className="px-4 py-3 border-b border-line last:border-0 hover:bg-secondary/20 transition-colors">
+                            <div className="text-sm font-medium">{d.name}</div>
+                            <div className="text-xs text-slate mt-0.5">License {d.licenseNo}</div>
+                            <div className={`text-xs mt-1.5 font-medium ${days < 0 ? 'text-danger' : 'text-warning'}`}>
+                              {days < 0 ? `Expired ${Math.abs(days)} days ago` : `Expires in ${days} days`}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => setIsDark(!isDark)}
+              className="p-1.5 rounded-full hover:bg-secondary text-slate hover:text-ink transition-colors"
+            >
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
             <span className="hidden sm:inline text-sm font-medium">{user?.name}</span>
             <span className="rounded-full bg-gradient-to-r from-[rgb(109_40_217_/_0.14)] to-[rgb(6_182_212_/_0.14)] text-[#6D28D9] text-xs font-medium px-2.5 py-0.5">
               {user ? roleLabel[user.role] : ""}
