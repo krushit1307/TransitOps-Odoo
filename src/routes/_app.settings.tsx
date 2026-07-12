@@ -50,19 +50,20 @@ export default function SettingsPage() {
                 <label className="label-caps block mb-1">Currency</label>
                 <select value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })}
                   className="w-full h-9 rounded-md border border-line bg-canvas px-3 text-sm">
-                  <option>INR</option><option>USD</option><option>EUR</option>
+                  <option>INR (Rs)</option><option>USD ($)</option><option>EUR (€)</option>
                 </select>
               </div>
               <div>
                 <label className="label-caps block mb-1">Distance Unit</label>
                 <select value={form.distanceUnit} onChange={(e) => setForm({ ...form, distanceUnit: e.target.value })}
                   className="w-full h-9 rounded-md border border-line bg-canvas px-3 text-sm">
-                  <option>km</option><option>mi</option>
+                  <option>Kilometers</option><option>Miles</option>
                 </select>
               </div>
             </div>
             <button onClick={() => { updateSettings(form); setSaved(true); setTimeout(() => setSaved(false), 2000); }}
-              className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-95 transition">Save changes</button>
+
+              className="h-9 px-4 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors">Save changes</button>
             {saved && <span className="ml-3 text-xs text-success">✓ Saved</span>}
           </div>
         </div>
