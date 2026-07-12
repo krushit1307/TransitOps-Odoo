@@ -12,22 +12,35 @@ export default function Dashboard() {
   const { vehicles, drivers, trips } = useData();
   const [typeF, setTypeF] = useState("All");
   const [statusF, setStatusF] = useState("All");
+  const [regionF, setRegionF] = useState("All");
+
+  const getRegion = (id: string) => (parseInt(id.replace(/\D/g, "") || "0") % 2 === 0 ? "South" : "North");
 
   const filteredV = vehicles.filter(
-    (v) => (typeF === "All" || v.type === typeF) && (statusF === "All" || v.status === statusF)
+    (v) => (typeF === "All" || v.type === typeF) && (statusF === "All" || v.status === statusF) && (regionF === "All" || getRegion(v.id) === regionF)
   );
+
+  const filteredT = trips.filter((t) => {
+    if (!t.vehicleId) return typeF === "All" && statusF === "All" && regionF === "All";
+    return filteredV.some(v => v.id === t.vehicleId);
+  });
 
   const active = filteredV.filter((v) => v.status !== "Retired").length;
   const available = filteredV.filter((v) => v.status === "Available").length;
   const inShop = filteredV.filter((v) => v.status === "InShop").length;
   const onTrip = filteredV.filter((v) => v.status === "OnTrip").length;
   const retired = filteredV.filter((v) => v.status === "Retired").length;
-  const activeTrips = trips.filter((t) => t.status === "Dispatched").length;
-  const pendingTrips = trips.filter((t) => t.status === "Draft").length;
-  const onDuty = drivers.filter((d) => d.status === "OnTrip").length;
+  const activeTrips = filteredT.filter((t) => t.status === "Dispatched").length;
+  const pendingTrips = filteredT.filter((t) => t.status === "Draft").length;
+  
+  const baseOnDuty = drivers.filter(d => d.status === "OnTrip");
+  const onDuty = (typeF === "All" && statusF === "All" && regionF === "All") 
+    ? baseOnDuty.length 
+    : baseOnDuty.filter(d => filteredT.some(t => t.driverId === d.id && t.status === "Dispatched")).length;
+    
   const util = active ? Math.round((onTrip / active) * 100) : 0;
 
-  const recent = trips.slice(0, 6);
+  const recent = filteredT.slice(0, 6);
   const total = active + retired || 1;
 
   const bar = (label: string, count: number, color: string) => (
@@ -42,6 +55,8 @@ export default function Dashboard() {
     </div>
   );
 
+  const pad = (n: number | string) => typeof n === "number" ? n.toString().padStart(2, "0") : n;
+
   return (
     <div>
       <PageHeader title="Operations Dashboard" subtitle="Live view of your depot at a glance." />
@@ -50,7 +65,7 @@ export default function Dashboard() {
         {[
           { label: "Vehicle Type", value: typeF, set: setTypeF, opts: ["All", "Van", "Truck", "Mini"] },
           { label: "Status", value: statusF, set: setStatusF, opts: ["All", "Available", "OnTrip", "InShop", "Retired"] },
-          { label: "Region", value: "All", set: () => {}, opts: ["All", "North", "South"] },
+          { label: "Region", value: regionF, set: setRegionF, opts: ["All", "North", "South"] },
         ].map((f) => (
           <select key={f.label} value={f.value} onChange={(e) => f.set(e.target.value)}
             className="h-9 rounded-md border border-line bg-surface px-3 text-sm">
@@ -60,13 +75,13 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3 mb-6">
-        <KpiCard label="Active Vehicles" value={active} tone="blue" icon={<Truck className="h-4 w-4" />} />
-        <KpiCard label="Available" value={available} tone="green" icon={<CheckCircle2 className="h-4 w-4" />} />
-        <KpiCard label="In Maintenance" value={inShop} tone="amber" icon={<Wrench className="h-4 w-4" />} />
-        <KpiCard label="Active Trips" value={activeTrips} tone="amber" icon={<RouteIcon className="h-4 w-4" />} />
-        <KpiCard label="Pending Trips" value={pendingTrips} tone="slate" icon={<Clock className="h-4 w-4" />} />
-        <KpiCard label="Drivers on Duty" value={onDuty} tone="green" icon={<Users className="h-4 w-4" />} />
-        <KpiCard label="Fleet Utilization" value={`${util}%`} tone="green" icon={<Gauge className="h-4 w-4" />} />
+        <KpiCard label="Active Vehicles" value={pad(active)} tone="blue" icon={<Truck className="h-4 w-4" />} />
+        <KpiCard label="Available" value={pad(available)} tone="green" icon={<CheckCircle2 className="h-4 w-4" />} />
+        <KpiCard label="In Maintenance" value={pad(inShop)} tone="amber" icon={<Wrench className="h-4 w-4" />} />
+        <KpiCard label="Active Trips" value={pad(activeTrips)} tone="amber" icon={<RouteIcon className="h-4 w-4" />} />
+        <KpiCard label="Pending Trips" value={pad(pendingTrips)} tone="slate" icon={<Clock className="h-4 w-4" />} />
+        <KpiCard label="Drivers on Duty" value={pad(onDuty)} tone="green" icon={<Users className="h-4 w-4" />} />
+        <KpiCard label="Fleet Utilization" value={`${pad(util)}%`} tone="green" icon={<Gauge className="h-4 w-4" />} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

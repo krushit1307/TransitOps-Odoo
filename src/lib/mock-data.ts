@@ -1,57 +1,54 @@
 import type {
-  Vehicle, Driver, Trip, MaintenanceLog, FuelLog, Expense, Settings,
+  SeedUser, Vehicle, Driver, Trip, MaintenanceLog, FuelLog, Expense, Settings,
 } from "./types";
 
+export const seedUsers: SeedUser[] = [
+  { id: "u1", name: "Patel Rajesh", email: "fleet@transitops.demo", role: "FleetManager", password: "Transit@123" },
+  { id: "u2", name: "Bhaiya Neeraj", email: "dispatch@transitops.demo", role: "Dispatcher", password: "Transit@123" },
+  { id: "u3", name: "Shah Amit", email: "safety@transitops.demo", role: "SafetyOfficer", password: "Transit@123" },
+  { id: "u4", name: "Desai Priya", email: "finance@transitops.demo", role: "FinancialAnalyst", password: "Transit@123" },
+];
+
 export const seedVehicles: Vehicle[] = [
-  { id: "v1", regNo: "VAN-05", nameModel: "Tata Ace Gold", type: "Van", maxCapacityKg: 500, odometerKm: 48210, acquisitionCost: 620000, status: "Available" },
-  { id: "v2", regNo: "TRK-11", nameModel: "Ashok Leyland Dost", type: "Truck", maxCapacityKg: 1500, odometerKm: 92345, acquisitionCost: 1150000, status: "OnTrip" },
-  { id: "v3", regNo: "MIN-02", nameModel: "Mahindra Bolero Pik-Up", type: "Mini", maxCapacityKg: 1200, odometerKm: 71100, acquisitionCost: 940000, status: "InShop" },
-  { id: "v4", regNo: "VAN-08", nameModel: "Maruti Super Carry", type: "Van", maxCapacityKg: 750, odometerKm: 34500, acquisitionCost: 580000, status: "Available" },
-  { id: "v5", regNo: "TRK-14", nameModel: "Eicher Pro 2049", type: "Truck", maxCapacityKg: 3000, odometerKm: 118200, acquisitionCost: 1850000, status: "OnTrip" },
-  { id: "v6", regNo: "TRK-07", nameModel: "Tata 407", type: "Truck", maxCapacityKg: 2500, odometerKm: 205000, acquisitionCost: 1450000, status: "Retired" },
-  { id: "v7", regNo: "MIN-04", nameModel: "Mahindra Jeeto", type: "Mini", maxCapacityKg: 700, odometerKm: 22450, acquisitionCost: 490000, status: "Available" },
+  { id: "v1", regNo: "GJ01AB4521", nameModel: "Tata Ace Gold", type: "Van", maxCapacityKg: 500, odometerKm: 74000, acquisitionCost: 620000, status: "Available" },
+  { id: "v2", regNo: "GJ01AB9981", nameModel: "Ashok Leyland Dost", type: "Truck", maxCapacityKg: 5000, odometerKm: 182000, acquisitionCost: 2450000, status: "OnTrip" },
+  { id: "v3", regNo: "GJ01AB1120", nameModel: "Mahindra Bolero Pik-Up", type: "Mini", maxCapacityKg: 1000, odometerKm: 66000, acquisitionCost: 410000, status: "InShop" },
+  { id: "v4", regNo: "GJ01AB0008", nameModel: "Maruti Super Carry", type: "Van", maxCapacityKg: 750, odometerKm: 241900, acquisitionCost: 590000, status: "Retired" },
+  { id: "v5", regNo: "GJ01XY5555", nameModel: "Eicher Pro 2049", type: "Truck", maxCapacityKg: 3000, odometerKm: 118200, acquisitionCost: 1850000, status: "OnTrip" },
+  { id: "v6", regNo: "GJ01MN9090", nameModel: "Mahindra Jeeto", type: "Mini", maxCapacityKg: 700, odometerKm: 22450, acquisitionCost: 490000, status: "Available" },
 ];
 
 export const seedDrivers: Driver[] = [
-  { id: "d1", name: "Rajesh Kumar", licenseNo: "DL-1420110012345", category: "HMV", licenseExpiry: "2027-08-15", contact: "98765xxxxx", tripCompletionPct: 96, safetyScore: "Excellent", status: "Available" },
-  { id: "d2", name: "Suresh Patil", licenseNo: "MH-1220098876543", category: "HMV", licenseExpiry: "2026-03-22", contact: "99876xxxxx", tripCompletionPct: 91, safetyScore: "Good", status: "OnTrip" },
-  { id: "d3", name: "Amit Verma", licenseNo: "UP-3320085432198", category: "LMV", licenseExpiry: "2024-11-30", contact: "97654xxxxx", tripCompletionPct: 78, safetyScore: "Fair", status: "OffDuty" },
-  { id: "d4", name: "Vikas Singh", licenseNo: "HR-0620110098721", category: "HMV", licenseExpiry: "2028-01-10", contact: "98123xxxxx", tripCompletionPct: 88, safetyScore: "Good", status: "OnTrip" },
-  { id: "d5", name: "Prakash Nair", licenseNo: "KL-0720075431287", category: "LMV", licenseExpiry: "2025-06-18", contact: "96543xxxxx", tripCompletionPct: 65, safetyScore: "Poor", status: "Suspended" },
-  { id: "d6", name: "Manish Yadav", licenseNo: "DL-1420130054821", category: "LMV", licenseExpiry: "2027-04-05", contact: "98211xxxxx", tripCompletionPct: 93, safetyScore: "Excellent", status: "Available" },
+  { id: "d1", name: "Alex", licenseNo: "DL-88213", category: "LMV", licenseExpiry: "2028-12-15", contact: "9876543210", tripCompletionPct: 96, safetyScore: 96, status: "Available" },
+  { id: "d2", name: "John", licenseNo: "DL-44120", category: "HMV", licenseExpiry: "2025-03-10", contact: "9987654321", tripCompletionPct: 81, safetyScore: 81, status: "Suspended" },
+  { id: "d3", name: "Priya", licenseNo: "DL-77031", category: "LMV", licenseExpiry: "2027-08-20", contact: "9765432109", tripCompletionPct: 99, safetyScore: 99, status: "OnTrip" },
+  { id: "d4", name: "Suresh", licenseNo: "DL-90045", category: "HMV", licenseExpiry: "2027-01-12", contact: "9812345678", tripCompletionPct: 88, safetyScore: 88, status: "OffDuty" },
 ];
 
 export const seedTrips: Trip[] = [
-  { id: "T-1042", source: "Delhi Depot", destination: "Gurugram Hub", vehicleId: "v2", driverId: "d2", cargoWeightKg: 1200, plannedDistanceKm: 42, status: "Dispatched", etaMinutes: 45 },
-  { id: "T-1041", source: "Delhi Depot", destination: "Noida FC", vehicleId: "v5", driverId: "d4", cargoWeightKg: 2400, plannedDistanceKm: 38, status: "Dispatched", etaMinutes: 22 },
-  { id: "T-1040", source: "Delhi Depot", destination: "Faridabad", vehicleId: "v1", driverId: "d1", cargoWeightKg: 420, plannedDistanceKm: 55, finalOdometerKm: 48210, fuelConsumedL: 6.4, status: "Completed" },
-  { id: "T-1039", source: "Delhi Depot", destination: "Sonipat", vehicleId: "v4", driverId: "d6", cargoWeightKg: 680, plannedDistanceKm: 62, finalOdometerKm: 34500, fuelConsumedL: 7.1, status: "Completed" },
-  { id: "T-1038", source: "Delhi Depot", destination: "Meerut", vehicleId: null, driverId: null, cargoWeightKg: 900, plannedDistanceKm: 88, status: "Cancelled", note: "Vehicle went to shop" },
+  { id: "TR001", source: "Gandhinagar Depot", destination: "Ahmedabad Hub", vehicleId: "v2", driverId: "d3", cargoWeightKg: 4500, plannedDistanceKm: 42, status: "Dispatched", etaMinutes: 45 },
+  { id: "TR002", source: "Gandhinagar Depot", destination: "Vatva Industrial Area", vehicleId: "v5", driverId: "d4", cargoWeightKg: 2400, plannedDistanceKm: 38, status: "Draft" },
+  { id: "TR003", source: "Gandhinagar Depot", destination: "Sanand Warehouse", vehicleId: "v1", driverId: "d1", cargoWeightKg: 420, plannedDistanceKm: 55, finalOdometerKm: 74000, fuelConsumedL: 6.4, status: "Completed" },
+  { id: "TR006", source: "Mansa", destination: "Kalol Depot", vehicleId: "v3", driverId: null, cargoWeightKg: 900, plannedDistanceKm: 88, status: "Cancelled", note: "Vehicle went to shop" },
 ];
 
 export const seedMaintenance: MaintenanceLog[] = [
   { id: "m1", vehicleId: "v3", serviceType: "Engine Overhaul", cost: 42000, date: "2026-07-08", status: "InShop" },
-  { id: "m2", vehicleId: "v1", serviceType: "Tyre Replacement", cost: 18500, date: "2026-06-22", status: "Completed" },
-  { id: "m3", vehicleId: "v5", serviceType: "Brake Service", cost: 9200, date: "2026-06-15", status: "Completed" },
-  { id: "m4", vehicleId: "v2", serviceType: "Oil Change", cost: 4500, date: "2026-06-02", status: "Completed" },
+  { id: "m2", vehicleId: "v3", serviceType: "Brake Service", cost: 18500, date: "2026-07-10", status: "InShop" },
+  { id: "m3", vehicleId: "v5", serviceType: "Oil Change", cost: 9200, date: "2026-06-15", status: "Completed" },
 ];
 
 export const seedFuel: FuelLog[] = [
   { id: "f1", vehicleId: "v1", date: "2026-07-10", liters: 32, cost: 3200 },
   { id: "f2", vehicleId: "v2", date: "2026-07-09", liters: 68, cost: 6800 },
-  { id: "f3", vehicleId: "v5", date: "2026-07-08", liters: 92, cost: 9200 },
-  { id: "f4", vehicleId: "v4", date: "2026-07-07", liters: 28, cost: 2800 },
-  { id: "f5", vehicleId: "v7", date: "2026-07-06", liters: 22, cost: 2200 },
 ];
 
 export const seedExpenses: Expense[] = [
-  { id: "e1", tripId: "T-1040", vehicleId: "v1", toll: 320, other: 150, maintenanceLinkedCost: 0, total: 470, status: "Approved" },
-  { id: "e2", tripId: "T-1039", vehicleId: "v4", toll: 480, other: 90, maintenanceLinkedCost: 0, total: 570, status: "Approved" },
-  { id: "e3", tripId: "T-1042", vehicleId: "v2", toll: 240, other: 0, maintenanceLinkedCost: 4500, total: 4740, status: "Pending" },
+  { id: "e1", tripId: "TR003", vehicleId: "v1", toll: 320, other: 150, maintenanceLinkedCost: 0, total: 470, status: "Approved" },
 ];
 
 export const seedSettings: Settings = {
-  depotName: "TransitOps Delhi Depot",
-  currency: "INR",
-  distanceUnit: "km",
+  depotName: "Gandhinagar Depot GJ4",
+  currency: "INR (Rs)",
+  distanceUnit: "Kilometers",
 };
