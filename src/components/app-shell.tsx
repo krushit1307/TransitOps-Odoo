@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Truck, Users, Route as RouteIcon, Wrench,
   Receipt, BarChart3, Settings as SettingsIcon, Search, LogOut,
 } from "lucide-react";
-import { useAuth } from "@/lib/store";
+import { useAuth, useData } from "@/lib/store";
 import { can, roleLabel, type Module } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
@@ -26,6 +26,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const logout = useAuth((s) => s.logout);
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const _rbacMatrix = useData((s) => s.rbacMatrix); // force subscription to trigger sidebar re-render on access changes
 
   const initials = user?.name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase() ?? "OP";
 

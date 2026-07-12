@@ -7,6 +7,13 @@ import {
   seedVehicles, seedDrivers, seedTrips, seedMaintenance, seedFuel, seedExpenses, seedSettings,
 } from "./mock-data";
 
+const defaultRBACMatrix: Record<Role, Record<string, "full" | "view" | "none">> = {
+  FleetManager:    { fleet: "full", drivers: "full", trips: "full", expenses: "full", analytics: "full" },
+  Dispatcher:      { fleet: "view", drivers: "none", trips: "full", expenses: "none", analytics: "none" },
+  SafetyOfficer:   { fleet: "none", drivers: "full", trips: "view", expenses: "none", analytics: "none" },
+  FinancialAnalyst:{ fleet: "view", drivers: "none", trips: "none", expenses: "full", analytics: "full" },
+};
+
 interface AuthState {
   user: User | null;
   login: (email: string, role: Role) => void;
@@ -35,6 +42,7 @@ interface DataState {
   fuel: FuelLog[];
   expenses: Expense[];
   settings: Settings;
+  rbacMatrix: Record<Role, Record<string, "full" | "view" | "none">>;
 
   addVehicle: (v: Omit<Vehicle, "id">) => { ok: boolean; error?: string };
   updateVehicleStatus: (id: string, status: Vehicle["status"]) => void;
@@ -54,6 +62,7 @@ interface DataState {
   addExpense: (e: Omit<Expense, "id" | "total">) => void;
 
   updateSettings: (s: Settings) => void;
+  updateRBAC: (role: Role, mod: string, access: "full" | "view" | "none") => void;
 }
 
 let counter = 1000;
@@ -67,6 +76,7 @@ export const useData = create<DataState>()((set, get) => ({
   fuel: seedFuel,
   expenses: seedExpenses,
   settings: seedSettings,
+  rbacMatrix: defaultRBACMatrix,
 
   addVehicle: (v) => {
     const exists = get().vehicles.some((x) => x.regNo.toLowerCase() === v.regNo.toLowerCase());
@@ -174,4 +184,14 @@ export const useData = create<DataState>()((set, get) => ({
   },
 
   updateSettings: (s) => set({ settings: s }),
+  updateRBAC: (role, mod, access) =>
+    set((s) => ({
+      rbacMatrix: {
+        ...s.rbacMatrix,
+        [role]: {
+          ...s.rbacMatrix[role],
+          [mod]: access,
+        },
+      },
+    })),
 }));
