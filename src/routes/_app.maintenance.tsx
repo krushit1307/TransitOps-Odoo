@@ -5,7 +5,9 @@ import { useAuth, useData } from "@/lib/store";
 import { can } from "@/lib/rbac";
 import { AlertTriangle, ArrowRight, Download } from "lucide-react";
 import { downloadCSV } from "@/lib/csv";
-import { toast } from "sonner";export default function MaintenancePage() {
+import { toast } from "sonner";
+
+export default function MaintenancePage() {
   const user = useAuth((s) => s.user);
   const readOnly = can(user?.role, "fleet") === "view";
   const noAccess = can(user?.role, "fleet") === "none";
