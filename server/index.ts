@@ -76,8 +76,38 @@ app.get('/api/trips', async (req, res) => {
 });
 
 app.post('/api/trips', async (req, res) => {
-  const t = await prisma.trip.create({ data: req.body });
-  res.json(t);
+  try {
+    const data = req.body;
+    let t;
+
+    if (data.vehicleId) {
+      const v = await prisma.vehicle.findUnique({ where: { id: data.vehicleId } });
+      if (v && data.cargoWeightKg > v.maxCapacityKg) return res.json({ ok: false, error: "Cargo weight exceeds vehicle capacity" });
+    }
+
+    if (data.status === 'Dispatched') {
+      if (data.vehicleId) {
+        const v = await prisma.vehicle.findUnique({ where: { id: data.vehicleId } });
+        if (v?.status !== 'Available') return res.json({ ok: false, error: "Vehicle is not available" });
+      }
+      if (data.driverId) {
+        const d = await prisma.driver.findUnique({ where: { id: data.driverId } });
+        if (d?.status !== 'Available') return res.json({ ok: false, error: "Driver is not available" });
+        if (d && new Date(d.licenseExpiry) < new Date()) return res.json({ ok: false, error: "Driver license is expired" });
+      }
+
+      await prisma.$transaction(async (tx: any) => {
+        t = await tx.trip.create({ data });
+        if (data.vehicleId) await tx.vehicle.update({ where: { id: data.vehicleId }, data: { status: 'OnTrip' } });
+        if (data.driverId) await tx.driver.update({ where: { id: data.driverId }, data: { status: 'OnTrip' } });
+      });
+    } else {
+      t = await prisma.trip.create({ data });
+    }
+    res.json(t);
+  } catch (e: any) {
+    res.json({ ok: false, error: e.message });
+  }
 });
 
 app.post('/api/trips/:id/dispatch', async (req, res) => {
@@ -85,6 +115,17 @@ app.post('/api/trips/:id/dispatch', async (req, res) => {
     const { id } = req.params;
     const trip = await prisma.trip.findUnique({ where: { id } });
     if (!trip) return res.json({ ok: false, error: "Trip not found" });
+
+    if (trip.vehicleId) {
+      const v = await prisma.vehicle.findUnique({ where: { id: trip.vehicleId } });
+      if (v?.status !== 'Available') return res.json({ ok: false, error: "Vehicle is not available" });
+      if (v && trip.cargoWeightKg > v.maxCapacityKg) return res.json({ ok: false, error: "Cargo weight exceeds vehicle capacity" });
+    }
+    if (trip.driverId) {
+      const d = await prisma.driver.findUnique({ where: { id: trip.driverId } });
+      if (d?.status !== 'Available') return res.json({ ok: false, error: "Driver is not available" });
+      if (d && new Date(d.licenseExpiry) < new Date()) return res.json({ ok: false, error: "Driver license is expired" });
+    }
 
     await prisma.$transaction(async (tx: any) => {
       await tx.trip.update({ where: { id }, data: { status: 'Dispatched' } });
@@ -107,6 +148,11 @@ app.post('/api/trips/:id/complete', async (req, res) => {
 
     const vehicle = trip.vehicleId ? await prisma.vehicle.findUnique({ where: { id: trip.vehicleId } }) : null;
     const startOdo = vehicle?.odometerKm ?? 0;
+    
+    if (finalOdo <= startOdo) {
+      return res.json({ ok: false, error: "Final odometer must be strictly greater than start odometer." });
+    }
+    
     const actualDistanceKm = finalOdo - startOdo;
 
     await prisma.$transaction(async (tx: any) => {
@@ -117,7 +163,7 @@ app.post('/api/trips/:id/complete', async (req, res) => {
       if (trip.vehicleId) {
         await tx.vehicle.update({ where: { id: trip.vehicleId }, data: { status: 'Available', odometerKm: finalOdo } });
         await tx.fuelLog.create({ 
-          data: { vehicleId: trip.vehicleId, date: new Date().toISOString().slice(0,10), liters: fuelL, cost: fuelCost } 
+          data: { vehicleId: trip.vehicleId, date: new Date(), liters: fuelL, cost: fuelCost } 
         });
       }
       if (trip.driverId) {
@@ -171,7 +217,7 @@ app.post('/api/maintenance', async (req, res) => {
     if (vehicle && vehicle.status === "OnTrip") return res.json({ ok: false, error: "Cannot add maintenance for a vehicle currently OnTrip" });
 
     await prisma.$transaction(async (tx: any) => {
-      await tx.maintenanceLog.create({ data: m });
+      await tx.maintenanceLog.create({ data: { ...m, date: new Date(m.date) } });
       if (m.status === "InShop") {
         await tx.vehicle.update({ where: { id: m.vehicleId }, data: { status: 'InShop' } });
       } else if (m.status === "Completed") {
@@ -224,7 +270,7 @@ app.get('/api/fuel', async (req, res) => {
 });
 
 app.post('/api/fuel', async (req, res) => {
-  const f = await prisma.fuelLog.create({ data: req.body });
+  const f = await prisma.fuelLog.create({ data: { ...req.body, date: new Date(req.body.date) } });
   res.json(f);
 });
 
