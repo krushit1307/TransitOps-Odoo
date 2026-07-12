@@ -62,7 +62,7 @@ export default function SettingsPage() {
               </div>
             </div>
             <button onClick={() => { updateSettings(form); setSaved(true); setTimeout(() => setSaved(false), 2000); }}
-              className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium">Save changes</button>
+              className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-95 transition">Save changes</button>
             {saved && <span className="ml-3 text-xs text-success">✓ Saved</span>}
           </div>
         </div>

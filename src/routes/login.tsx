@@ -16,11 +16,11 @@ export default function LoginPage() {
   const [password, setPassword] = useState("Transit@123");
   const [role, setRole] = useState<Role>("FleetManager");
   const [remember, setRemember] = useState(true);
-  
+
   // Map of email -> failed attempts
   const [attemptsMap, setAttemptsMap] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
-  
+
   const currentAttempts = attemptsMap[email] || 0;
   const locked = currentAttempts >= 5;
 
@@ -38,13 +38,13 @@ export default function LoginPage() {
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (locked) return;
-    
+
     const trimmedEmail = email.trim();
     if (trimmedEmail.length === 0 || password.length === 0) {
       setError("Invalid credentials");
       return;
     }
-    
+
     const res = login(trimmedEmail, password, role);
     if (res.ok) {
       setError(null);
