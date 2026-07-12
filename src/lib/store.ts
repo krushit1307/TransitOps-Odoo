@@ -43,7 +43,7 @@ interface DataState {
   updateDriverStatus: (id: string, status: Driver["status"]) => void;
 
   createTrip: (t: Omit<Trip, "id" | "status"> & { status?: Trip["status"] }) => Trip;
-  dispatchTrip: (id: string) => void;
+  dispatchTrip: (id: string) => { ok: boolean; error?: string };
   completeTrip: (id: string, finalOdo: number, fuelL: number) => void;
   cancelTrip: (id: string) => void;
 
@@ -92,10 +92,26 @@ export const useData = create<DataState>()((set, get) => ({
   },
   dispatchTrip: (id) => {
     const trip = get().trips.find((t) => t.id === id);
-    if (!trip) return;
-    set((s) => ({ trips: s.trips.map((t) => (t.id === id ? { ...t, status: "Dispatched" } : t)) }));
-    if (trip.vehicleId) get().updateVehicleStatus(trip.vehicleId, "OnTrip");
-    if (trip.driverId) get().updateDriverStatus(trip.driverId, "OnTrip");
+    if (!trip) return { ok: false, error: "Trip not found" };
+    if (!trip.vehicleId || !trip.driverId) return { ok: false, error: "Trip must have both a vehicle and a driver assigned" };
+
+    const vehicle = get().vehicles.find((v) => v.id === trip.vehicleId);
+    if (!vehicle) return { ok: false, error: "Vehicle not found" };
+    
+    const driver = get().drivers.find((d) => d.id === trip.driverId);
+    if (!driver) return { ok: false, error: "Driver not found" };
+
+    if (vehicle.status !== "Available") return { ok: false, error: `Vehicle must be Available (currently ${vehicle.status})` };
+    if (driver.status !== "Available") return { ok: false, error: `Driver must be Available (currently ${driver.status})` };
+    if (new Date(driver.licenseExpiry) < new Date()) return { ok: false, error: "Driver license is expired" };
+    if (trip.cargoWeightKg > vehicle.maxCapacityKg) return { ok: false, error: "Cargo weight exceeds vehicle capacity" };
+
+    set((s) => ({
+      trips: s.trips.map((t) => (t.id === id ? { ...t, status: "Dispatched" } : t)),
+      vehicles: s.vehicles.map((v) => (v.id === vehicle.id ? { ...v, status: "OnTrip" } : v)),
+      drivers: s.drivers.map((d) => (d.id === driver.id ? { ...d, status: "OnTrip" } : d)),
+    }));
+    return { ok: true };
   },
   completeTrip: (id, finalOdo, fuelL) => {
     const trip = get().trips.find((t) => t.id === id);

@@ -37,6 +37,8 @@ export default function TripsPage() {
     plannedDistanceKm: 0,
   });
 
+  const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
+
   const selectedVehicle = vehicles.find((v) => v.id === form.vehicleId);
   const overCap =
     selectedVehicle && form.cargoWeightKg > selectedVehicle.maxCapacityKg
@@ -55,30 +57,44 @@ export default function TripsPage() {
 
       {/* Lifecycle stepper */}
       <div className="bg-surface border border-line rounded-xl p-5 mb-6 shadow-[var(--shadow-e1)]">
-        <div className="label-caps mb-5">Trip Lifecycle</div>
+        <div className="flex items-center justify-between mb-5">
+          <div className="label-caps">Trip Lifecycle</div>
+          <div className="text-xs text-slate font-medium">
+            {selectedTripId ? `Showing actual state for ${selectedTripId}` : "Select a trip from Live Board"}
+          </div>
+        </div>
         <div className="relative flex items-center justify-between max-w-3xl mx-auto px-2">
           <div className="absolute left-6 right-6 top-4 h-[2px] dashed-route" />
-          {[
-            { key: "Draft", label: "Draft", active: false, done: false },
-            { key: "Dispatched", label: "Dispatched", active: true, done: false },
-            { key: "Completed", label: "Completed", active: false, done: false },
-            { key: "Cancelled", label: "Cancelled", active: false, done: false, terminal: true },
-          ].map((s) => (
-            <div key={s.key} className="relative z-10 flex flex-col items-center gap-2">
-              <div
-                className={`h-8 w-8 rounded-full border-2 grid place-items-center bg-surface font-mono text-xs ${
-                  s.active
-                    ? "border-primary bg-primary text-primary-foreground pulse-ring"
-                    : s.terminal
-                    ? "border-line text-slate"
-                    : "border-line text-slate"
-                }`}
-              >
-                {s.active ? <Check className="h-4 w-4" /> : s.terminal ? "×" : ""}
+          {(() => {
+            const t = trips.find(x => x.id === selectedTripId);
+            const isCancelled = t?.status === "Cancelled";
+            const currentIdx = t ? ["Draft", "Dispatched", "Completed", "Cancelled"].indexOf(t.status) : -1;
+            return [
+              { key: "Draft", label: "Draft", active: t?.status === "Draft", done: t && currentIdx > 0 && !isCancelled, terminal: false },
+              { key: "Dispatched", label: "Dispatched", active: t?.status === "Dispatched", done: t?.status === "Completed", terminal: false },
+              { key: "Completed", label: "Completed", active: t?.status === "Completed", done: t?.status === "Completed", terminal: false },
+              { key: "Cancelled", label: "Cancelled", active: isCancelled, done: false, terminal: true },
+            ].map((s) => (
+              <div key={s.key} className="relative z-10 flex flex-col items-center gap-2">
+                <div
+                  className={`h-8 w-8 rounded-full border-2 grid place-items-center bg-surface font-mono text-xs transition-colors ${
+                    s.active && !s.terminal
+                      ? "border-primary bg-primary text-primary-foreground pulse-ring"
+                      : s.active && s.terminal
+                      ? "border-danger bg-danger text-danger-foreground pulse-ring"
+                      : s.done
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : s.terminal
+                      ? "border-line text-slate"
+                      : "border-line text-slate"
+                  }`}
+                >
+                  {(s.active && !s.terminal) || s.done ? <Check className="h-4 w-4" /> : s.terminal ? "×" : ""}
+                </div>
+                <span className={`text-xs font-medium ${s.active || s.done ? "text-ink" : "text-slate"}`}>{s.label}</span>
               </div>
-              <span className={`text-xs font-medium ${s.active ? "text-ink" : "text-slate"}`}>{s.label}</span>
-            </div>
-          ))}
+            ));
+          })()}
         </div>
       </div>
 
@@ -201,7 +217,7 @@ export default function TripsPage() {
               const v = vehicles.find((x) => x.id === t.vehicleId);
               const d = drivers.find((x) => x.id === t.driverId);
               return (
-                <div key={t.id} className="border border-line rounded-md p-3 flex items-center gap-4 hover:bg-secondary/30">
+                <div key={t.id} onClick={() => setSelectedTripId(t.id)} className={`border rounded-md p-3 flex items-center gap-4 cursor-pointer transition-colors ${selectedTripId === t.id ? 'bg-secondary/50 border-primary/40 shadow-sm' : 'border-line hover:bg-secondary/30'}`}>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs">{t.id}</span>
@@ -219,9 +235,14 @@ export default function TripsPage() {
                   <div className="text-right shrink-0">
                     {t.status === "Draft" && !readOnly && (
                       <div className="mt-2 flex justify-end">
-                        <button onClick={() => {
-                          dispatchTrip(t.id);
-                          toast.success(`Trip ${t.id} dispatched`);
+                        <button onClick={(e) => {
+                          e.stopPropagation();
+                          const res = dispatchTrip(t.id);
+                          if (!res.ok) {
+                            toast.error(res.error);
+                          } else {
+                            toast.success(`Trip ${t.id} dispatched`);
+                          }
                         }} className="text-[11px] px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:brightness-105 shadow-[var(--shadow-e1)]">
                           Dispatch
                         </button>
@@ -232,9 +253,9 @@ export default function TripsPage() {
                         <div className="text-xs text-slate">{t.etaMinutes ? `${t.etaMinutes} min` : "In transit"}</div>
                         {!readOnly && (
                           <div className="mt-2 flex gap-1">
-                            <button onClick={() => { completeTrip(t.id, (v?.odometerKm ?? 0) + t.plannedDistanceKm, Math.round(t.plannedDistanceKm / 8)); toast.success(`Trip ${t.id} completed`); }}
+                            <button onClick={(e) => { e.stopPropagation(); completeTrip(t.id, (v?.odometerKm ?? 0) + t.plannedDistanceKm, Math.round(t.plannedDistanceKm / 8)); toast.success(`Trip ${t.id} completed`); }}
                               className="text-[11px] px-2 py-1 rounded-md border border-success/40 text-success hover:bg-success/10">Complete</button>
-                            <button onClick={() => { cancelTrip(t.id); toast(`Trip ${t.id} cancelled`); }}
+                            <button onClick={(e) => { e.stopPropagation(); cancelTrip(t.id); toast(`Trip ${t.id} cancelled`); }}
                               className="text-[11px] px-2 py-1 rounded-md border border-danger/40 text-danger hover:bg-danger/10">Cancel</button>
                           </div>
                         )}
