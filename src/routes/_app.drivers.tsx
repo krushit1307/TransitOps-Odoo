@@ -4,10 +4,9 @@ import { PageHeader } from "@/components/app-shell";
 import { StatusPill } from "@/components/status-pill";
 import { useAuth, useData } from "@/lib/store";
 import { can } from "@/lib/rbac";
-import { AlertTriangle, Plus, X } from "lucide-react";
+import { AlertTriangle, Plus, X, Download } from "lucide-react";
 import type { Driver, DriverStatus } from "@/lib/types";
-
-
+import { downloadCSV } from "@/lib/csv";
 
 const isExpired = (iso: string) => new Date(iso) < new Date();
 
@@ -21,17 +20,42 @@ export default function DriversPage() {
 
   if (noAccess) return <div className="text-slate">Your role has no access to Drivers.</div>;
 
+  const handleExportCSV = () => {
+    downloadCSV(
+      drivers,
+      [
+        { key: "name", label: "Name" },
+        { key: "licenseNo", label: "License No." },
+        { key: "category", label: "Category" },
+        { key: "licenseExpiry", label: "License Expiry" },
+        { key: "contact", label: "Contact" },
+        { key: "tripCompletionPct", label: "Trip Completion %" },
+        { key: "safetyScore", label: "Safety Score" },
+        { key: "status", label: "Status" },
+      ],
+      "drivers_list"
+    );
+  };
+
   return (
     <div>
       <PageHeader
         title="Drivers & Safety Profiles"
         subtitle="License compliance, safety scores, and duty status."
-        actions={!readOnly && (
-          <button onClick={() => setOpen(true)}
-            className="inline-flex items-center gap-2 h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium">
-            <Plus className="h-4 w-4" /> Add Driver
-          </button>
-        )}
+        actions={
+          <div className="flex items-center gap-2">
+            <button onClick={handleExportCSV}
+              className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-line text-sm hover:bg-secondary/50 transition">
+              <Download className="h-4 w-4" /> Export CSV
+            </button>
+            {!readOnly && (
+              <button onClick={() => setOpen(true)}
+                className="inline-flex items-center gap-2 h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-95 transition">
+                <Plus className="h-4 w-4" /> Add Driver
+              </button>
+            )}
+          </div>
+        }
       />
 
       <div className="bg-surface border border-line rounded-xl shadow-[var(--shadow-e1)] overflow-hidden">

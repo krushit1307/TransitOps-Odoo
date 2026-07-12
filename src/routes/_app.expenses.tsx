@@ -4,9 +4,8 @@ import { PageHeader } from "@/components/app-shell";
 import { StatusPill } from "@/components/status-pill";
 import { useAuth, useData } from "@/lib/store";
 import { can } from "@/lib/rbac";
-import { Plus, X } from "lucide-react";
-
-
+import { Plus, X, Download } from "lucide-react";
+import { downloadCSV } from "@/lib/csv";
 
 export default function ExpensesPage() {
   const user = useAuth((s) => s.user);
@@ -23,23 +22,80 @@ export default function ExpensesPage() {
   const maintTotal = maintenance.reduce((a, b) => a + b.cost, 0);
   const opTotal = fuelTotal + maintTotal;
 
+  const handleExportFuelCSV = () => {
+    downloadCSV(
+      fuel,
+      [
+        { key: "id", label: "Fuel Log ID" },
+        {
+          key: "vehicleId",
+          label: "Vehicle Registration",
+          transform: (vId) => {
+            const v = vehicles.find((x) => x.id === vId);
+            return v ? v.regNo : "Unknown";
+          },
+        },
+        { key: "date", label: "Date" },
+        { key: "liters", label: "Liters" },
+        { key: "cost", label: "Cost (INR)" },
+      ],
+      "fuel_logs"
+    );
+  };
+
+  const handleExportExpensesCSV = () => {
+    downloadCSV(
+      expenses,
+      [
+        { key: "id", label: "Expense ID" },
+        { key: "tripId", label: "Trip ID" },
+        {
+          key: "vehicleId",
+          label: "Vehicle Registration",
+          transform: (vId) => {
+            const v = vehicles.find((x) => x.id === vId);
+            return v ? v.regNo : "Unknown";
+          },
+        },
+        { key: "toll", label: "Toll (INR)" },
+        { key: "other", label: "Other Expense (INR)" },
+        { key: "maintenanceLinkedCost", label: "Maintenance Cost (INR)" },
+        { key: "total", label: "Total (INR)" },
+        { key: "status", label: "Status" },
+      ],
+      "other_expenses"
+    );
+  };
+
   return (
     <div>
       <PageHeader
         title="Fuel & Expense Management"
         subtitle="Fuel consumption, tolls, and linked maintenance costs — rolled up automatically."
-        actions={!readOnly && (
-          <>
-            <button onClick={() => setFuelOpen(true)}
-              className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-line text-sm">
-              <Plus className="h-4 w-4" /> Log Fuel
+        actions={
+          <div className="flex items-center gap-2">
+            <button onClick={handleExportFuelCSV}
+              className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-line text-sm hover:bg-secondary/50 transition">
+              <Download className="h-4 w-4" /> Export Fuel Logs
             </button>
-            <button onClick={() => setExpOpen(true)}
-              className="inline-flex items-center gap-2 h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium">
-              <Plus className="h-4 w-4" /> Add Expense
+            <button onClick={handleExportExpensesCSV}
+              className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-line text-sm hover:bg-secondary/50 transition">
+              <Download className="h-4 w-4" /> Export Expenses
             </button>
-          </>
-        )}
+            {!readOnly && (
+              <>
+                <button onClick={() => setFuelOpen(true)}
+                  className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-line text-sm hover:bg-secondary/50 transition">
+                  <Plus className="h-4 w-4" /> Log Fuel
+                </button>
+                <button onClick={() => setExpOpen(true)}
+                  className="inline-flex items-center gap-2 h-9 px-3 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-95 transition">
+                  <Plus className="h-4 w-4" /> Add Expense
+                </button>
+              </>
+            )}
+          </div>
+        }
       />
 
       <div className="bg-surface border border-line rounded-xl shadow-[var(--shadow-e1)] overflow-hidden mb-4">

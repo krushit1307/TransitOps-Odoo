@@ -4,9 +4,8 @@ import { PageHeader } from "@/components/app-shell";
 import { StatusPill } from "@/components/status-pill";
 import { useAuth, useData } from "@/lib/store";
 import { can } from "@/lib/rbac";
-import { AlertTriangle, ArrowRight } from "lucide-react";
-
-
+import { AlertTriangle, ArrowRight, Download } from "lucide-react";
+import { downloadCSV } from "@/lib/csv";
 
 export default function MaintenancePage() {
   const user = useAuth((s) => s.user);
@@ -24,9 +23,40 @@ export default function MaintenancePage() {
 
   if (noAccess) return <div className="text-slate">Your role has no access to Maintenance.</div>;
 
+  const handleExportCSV = () => {
+    downloadCSV(
+      maintenance,
+      [
+        { key: "id", label: "Record ID" },
+        {
+          key: "vehicleId",
+          label: "Vehicle Registration",
+          transform: (vId) => {
+            const v = vehicles.find((x) => x.id === vId);
+            return v ? v.regNo : "Unknown";
+          },
+        },
+        { key: "serviceType", label: "Service Type" },
+        { key: "cost", label: "Cost (INR)" },
+        { key: "date", label: "Date" },
+        { key: "status", label: "Status" },
+      ],
+      "maintenance_logs"
+    );
+  };
+
   return (
     <div>
-      <PageHeader title="Maintenance" subtitle="Log service records; vehicles automatically move in and out of the dispatch pool." />
+      <PageHeader
+        title="Maintenance"
+        subtitle="Log service records; vehicles automatically move in and out of the dispatch pool."
+        actions={
+          <button onClick={handleExportCSV}
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-line text-sm hover:bg-secondary/50 transition">
+            <Download className="h-4 w-4" /> Export CSV
+          </button>
+        }
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Form */}

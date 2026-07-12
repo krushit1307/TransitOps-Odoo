@@ -4,10 +4,9 @@ import { PageHeader } from "@/components/app-shell";
 import { StatusPill } from "@/components/status-pill";
 import { useAuth, useData } from "@/lib/store";
 import { can } from "@/lib/rbac";
-import { AlertCircle, Check } from "lucide-react";
+import { AlertCircle, Check, Download } from "lucide-react";
 import { toast } from "sonner";
-
-
+import { downloadCSV } from "@/lib/csv";
 
 const isExpired = (iso: string) => new Date(iso) < new Date();
 
@@ -49,12 +48,55 @@ export default function TripsPage() {
   const canDispatch =
     !readOnly && form.destination && form.vehicleId && form.driverId && form.cargoWeightKg > 0 && !overCap;
 
-
   if (noAccess) return <div className="text-slate">Your role has no access to Trips.</div>;
+
+  const handleExportCSV = () => {
+    downloadCSV(
+      trips,
+      [
+        { key: "id", label: "Trip ID" },
+        { key: "status", label: "Status" },
+        { key: "source", label: "Source" },
+        { key: "destination", label: "Destination" },
+        {
+          key: "vehicleId",
+          label: "Vehicle Registration",
+          transform: (v) => {
+            const veh = vehicles.find((x) => x.id === v);
+            return veh ? veh.regNo : "Unassigned";
+          },
+        },
+        {
+          key: "driverId",
+          label: "Driver Name",
+          transform: (d) => {
+            const drv = drivers.find((x) => x.id === d);
+            return drv ? drv.name : "Unassigned";
+          },
+        },
+        { key: "cargoWeightKg", label: "Cargo Weight (kg)" },
+        { key: "plannedDistanceKm", label: "Planned Distance (km)" },
+        { key: "finalOdometerKm", label: "Final Odometer (km)" },
+        { key: "fuelConsumedL", label: "Fuel Consumed (L)" },
+        { key: "etaMinutes", label: "ETA (min)" },
+        { key: "note", label: "Note / Reason" },
+      ],
+      "trips_list"
+    );
+  };
 
   return (
     <div>
-      <PageHeader title="Trip Dispatcher" subtitle="Assign a vehicle and driver to a new run — capacity and compliance enforced." />
+      <PageHeader
+        title="Trip Dispatcher"
+        subtitle="Assign a vehicle and driver to a new run — capacity and compliance enforced."
+        actions={
+          <button onClick={handleExportCSV}
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-line text-sm hover:bg-secondary/50 transition">
+            <Download className="h-4 w-4" /> Export CSV
+          </button>
+        }
+      />
 
       {/* Lifecycle stepper */}
       <div className="bg-surface border border-line rounded-xl p-5 mb-6 shadow-[var(--shadow-e1)]">
