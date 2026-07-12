@@ -29,7 +29,7 @@ export default function TripsPage() {
   );
 
   const [form, setForm] = useState({
-    source: "Delhi Depot",
+    source: "Gandhinagar Depot",
     destination: "",
     vehicleId: "",
     driverId: "",
@@ -111,7 +111,7 @@ export default function TripsPage() {
               </Field>
               <Field label="Destination">
                 <input value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })}
-                  className="w-full h-9 rounded-md border border-line bg-canvas px-3 text-sm" placeholder="e.g. Gurugram Hub" />
+                  className="w-full h-9 rounded-md border border-line bg-canvas px-3 text-sm" placeholder="e.g. Ahmedabad Hub" />
               </Field>
             </div>
             <Field label="Vehicle (available only)">
@@ -181,7 +181,7 @@ export default function TripsPage() {
                     status: "Dispatched",
                   });
                   toast.success(`Trip dispatched to ${form.destination}`);
-                  setForm({ source: "Delhi Depot", destination: "", vehicleId: "", driverId: "", cargoWeightKg: 0, plannedDistanceKm: 0 });
+                  setForm({ source: "Gandhinagar Depot", destination: "", vehicleId: "", driverId: "", cargoWeightKg: 0, plannedDistanceKm: 0 });
                 }}
                 className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40 shadow-[var(--shadow-e1)] hover:brightness-105"
               >
@@ -196,13 +196,13 @@ export default function TripsPage() {
                     status: "Draft",
                   });
                   toast.success(`Draft saved`);
-                  setForm({ source: "Delhi Depot", destination: "", vehicleId: "", driverId: "", cargoWeightKg: 0, plannedDistanceKm: 0 });
+                  setForm({ source: "Gandhinagar Depot", destination: "", vehicleId: "", driverId: "", cargoWeightKg: 0, plannedDistanceKm: 0 });
                 }}
                 className="h-9 px-4 rounded-lg border border-line text-sm hover:bg-secondary"
               >
                 Save Draft
               </button>
-              <button onClick={() => setForm({ source: "Delhi Depot", destination: "", vehicleId: "", driverId: "", cargoWeightKg: 0, plannedDistanceKm: 0 })} className="h-9 px-4 rounded-lg border border-line text-sm hover:bg-secondary">Clear</button>
+              <button onClick={() => setForm({ source: "Gandhinagar Depot", destination: "", vehicleId: "", driverId: "", cargoWeightKg: 0, plannedDistanceKm: 0 })} className="h-9 px-4 rounded-lg border border-line text-sm hover:bg-secondary">Clear</button>
             </div>
           </div>
         </div>
@@ -235,7 +235,17 @@ export default function TripsPage() {
                   </div>
                   <div className="text-right shrink-0">
                     {t.status === "Draft" && !readOnly && (
-                      <div className="mt-2 flex justify-end">
+                      <div className="mt-2 flex justify-end gap-1">
+                        <button onClick={(e) => { 
+                            e.stopPropagation(); 
+                            const reason = window.prompt("Reason for cancellation?");
+                            if (!reason) return;
+                            cancelTrip(t.id, reason); 
+                            toast(`Trip ${t.id} cancelled`); 
+                          }}
+                          className="text-[11px] px-2 py-1.5 rounded-md border border-danger/40 text-danger hover:bg-danger/10">
+                          Cancel
+                        </button>
                         <button onClick={(e) => {
                           e.stopPropagation();
                           const res = dispatchTrip(t.id);
@@ -256,7 +266,13 @@ export default function TripsPage() {
                           <div className="mt-2 flex gap-1">
                             <button onClick={(e) => { e.stopPropagation(); setCompletingTripId(t.id); }}
                               className="text-[11px] px-2 py-1 rounded-md border border-success/40 text-success hover:bg-success/10">Complete</button>
-                            <button onClick={(e) => { e.stopPropagation(); cancelTrip(t.id); toast(`Trip ${t.id} cancelled`); }}
+                            <button onClick={(e) => { 
+                                e.stopPropagation(); 
+                                const reason = window.prompt("Reason for cancellation?");
+                                if (!reason) return;
+                                cancelTrip(t.id, reason); 
+                                toast(`Trip ${t.id} cancelled`); 
+                              }}
                               className="text-[11px] px-2 py-1 rounded-md border border-danger/40 text-danger hover:bg-danger/10">Cancel</button>
                           </div>
                         )}

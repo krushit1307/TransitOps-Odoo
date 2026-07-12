@@ -45,7 +45,7 @@ interface DataState {
   createTrip: (t: Omit<Trip, "id" | "status"> & { status?: Trip["status"] }) => Trip;
   dispatchTrip: (id: string) => { ok: boolean; error?: string };
   completeTrip: (id: string, finalOdo: number, fuelL: number, fuelCost: number) => void;
-  cancelTrip: (id: string) => void;
+  cancelTrip: (id: string, reason: string) => void;
 
   addMaintenance: (m: Omit<MaintenanceLog, "id">) => void;
   closeMaintenance: (id: string) => void;
@@ -136,11 +136,18 @@ export const useData = create<DataState>()((set, get) => ({
     }
     if (trip.driverId) get().updateDriverStatus(trip.driverId, "Available");
   },
-  cancelTrip: (id) => {
+  cancelTrip: (id, reason) => {
     const trip = get().trips.find((t) => t.id === id);
     if (!trip) return;
-    set((s) => ({ trips: s.trips.map((t) => (t.id === id ? { ...t, status: "Cancelled" } : t)) }));
-    if (trip.vehicleId) get().updateVehicleStatus(trip.vehicleId, "Available");
+    set((s) => ({ trips: s.trips.map((t) => (t.id === id ? { ...t, status: "Cancelled", note: reason } : t)) }));
+    if (trip.status === "Draft") return;
+    
+    if (trip.vehicleId) {
+      const vehicle = get().vehicles.find((v) => v.id === trip.vehicleId);
+      if (vehicle && vehicle.status !== "InShop") {
+        get().updateVehicleStatus(trip.vehicleId, "Available");
+      }
+    }
     if (trip.driverId) get().updateDriverStatus(trip.driverId, "Available");
   },
 
