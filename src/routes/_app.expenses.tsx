@@ -219,12 +219,18 @@ export default function ExpensesPage() {
 
       {fuelOpen && (
         <Modal title="Log Fuel" onClose={() => setFuelOpen(false)}>
-          <FuelForm vehicles={vehicles} onSubmit={async (f) => { await addFuel(f); setFuelOpen(false); }} />
+          <FuelForm vehicles={vehicles} onSubmit={async (f) => { 
+            const res = await addFuel(f); 
+            if (res.ok) setFuelOpen(false); 
+          }} />
         </Modal>
       )}
       {expOpen && (
         <Modal title="Add Expense" onClose={() => setExpOpen(false)}>
-          <ExpenseForm vehicles={vehicles} onSubmit={async (e) => { await addExpense(e); setExpOpen(false); }} />
+          <ExpenseForm vehicles={vehicles} onSubmit={async (e) => { 
+            const res = await addExpense(e); 
+            if (res.ok) setExpOpen(false); 
+          }} />
         </Modal>
       )}
     </div>
@@ -248,7 +254,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
 function FuelForm({ vehicles, onSubmit }: { vehicles: any[]; onSubmit: (f: any) => void }) {
   const [f, setF] = useState({ vehicleId: vehicles[0]?.id ?? "", date: new Date().toISOString().slice(0, 10), liters: 0, cost: 0 });
   return (
-    <form onSubmit={async (e) => { e.preventDefault(); await onSubmit(f); }} className="space-y-3">
+    <form onSubmit={(e) => { e.preventDefault(); onSubmit(f); }} className="space-y-3">
       <select value={f.vehicleId} onChange={(e) => setF({ ...f, vehicleId: e.target.value })}
         className="w-full h-9 rounded-md border border-line bg-canvas px-3 text-sm">
         {vehicles.map((v) => <option key={v.id} value={v.id}>{v.regNo}</option>)}
@@ -267,7 +273,7 @@ function FuelForm({ vehicles, onSubmit }: { vehicles: any[]; onSubmit: (f: any) 
 function ExpenseForm({ vehicles, onSubmit }: { vehicles: any[]; onSubmit: (e: any) => void }) {
   const [f, setF] = useState({ tripId: "", vehicleId: vehicles[0]?.id ?? "", toll: 0, other: 0, maintenanceLinkedCost: 0, status: "Pending" as const });
   return (
-    <form onSubmit={async (e) => { e.preventDefault(); await onSubmit(f); }} className="space-y-3">
+    <form onSubmit={(e) => { e.preventDefault(); onSubmit(f); }} className="space-y-3">
       <input placeholder="Trip ID (e.g. T-1042)" value={f.tripId} onChange={(e) => setF({ ...f, tripId: e.target.value })}
         className="w-full h-9 rounded-md border border-line bg-canvas px-3 text-sm font-mono" />
       <select value={f.vehicleId} onChange={(e) => setF({ ...f, vehicleId: e.target.value })}

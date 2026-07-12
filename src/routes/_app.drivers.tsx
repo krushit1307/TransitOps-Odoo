@@ -186,8 +186,7 @@ function AddDriverModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: 
         <form onSubmit={async (e) => { 
           e.preventDefault(); 
           const res = await onSubmit(form); 
-          if (res.ok) onClose();
-          else alert(res.error || "Failed to add driver");
+          if (res.ok) onClose(); else toast.error(res.error); 
         }} className="p-5 space-y-3">
           <div>
             <label className="label-caps block mb-1">Name</label>

@@ -149,8 +149,12 @@ export default function FleetPage() {
 }
 
 function AddVehicleModal({
-  onClose, onSubmit,
-}: { onClose: () => void; onSubmit: (v: Omit<Vehicle, "id">) => { ok: boolean; error?: string } }) {
+  onClose, onSubmit, onDocAttach
+}: { 
+  onClose: () => void; 
+  onSubmit: (v: Omit<Vehicle, "id">) => Promise<{ ok: boolean; error?: string }>;
+  onDocAttach: (name: string) => void;
+}) {
   const [form, setForm] = useState<Omit<Vehicle, "id">>({
     regNo: "", nameModel: "", type: "Van", maxCapacityKg: 500, odometerKm: 0, acquisitionCost: 0, status: "Available",
   });
@@ -167,8 +171,13 @@ function AddVehicleModal({
         <form
           onSubmit={async (e) => {
             e.preventDefault();
-            const r = onSubmit(form);
-            if (r.ok) onClose(); else setErr(r.error ?? "Failed to add");
+            const r = await onSubmit(form);
+            if (r.ok) {
+              if (docFile) onDocAttach(docFile.name);
+              onClose();
+            } else {
+              setErr(r.error ?? "Failed to add");
+            }
           }}
           className="p-5 space-y-3"
         >

@@ -227,35 +227,39 @@ export default function TripsPage() {
             <div className="flex gap-2 pt-2">
               <button
                 disabled={!canDispatch}
-                onClick={() => {
+                onClick={async () => {
                   if (overCap) {
                     toast.error(`Dispatch blocked — capacity exceeded by ${overCap} kg`);
                     return;
                   }
-                  createTrip({
+                  const res = await createTrip({
                     source: form.source, destination: form.destination,
                     vehicleId: form.vehicleId, driverId: form.driverId,
                     cargoWeightKg: form.cargoWeightKg, plannedDistanceKm: form.plannedDistanceKm,
                     etaMinutes: Math.max(20, Math.round(form.plannedDistanceKm * 1.4)),
                     status: "Dispatched",
                   });
-                  toast.success(`Trip dispatched to ${form.destination}`);
-                  setForm({ source: "Gandhinagar Depot", destination: "", vehicleId: "", driverId: "", cargoWeightKg: 0, plannedDistanceKm: 0 });
+                  if (res.ok) {
+                    toast.success(`Trip dispatched to ${form.destination}`);
+                    setForm({ source: "Gandhinagar Depot", destination: "", vehicleId: "", driverId: "", cargoWeightKg: 0, plannedDistanceKm: 0 });
+                  } else toast.error(res.error);
                 }}
                 className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40 shadow-[var(--shadow-e1)] hover:brightness-105"
               >
                 {overCap ? "Dispatch (Blocked)" : "Dispatch"}
               </button>
               <button
-                onClick={() => {
-                  createTrip({
+                onClick={async () => {
+                  const res = await createTrip({
                     source: form.source || "—", destination: form.destination || "—",
                     vehicleId: form.vehicleId || null, driverId: form.driverId || null,
                     cargoWeightKg: form.cargoWeightKg, plannedDistanceKm: form.plannedDistanceKm,
                     status: "Draft",
                   });
-                  toast.success(`Draft saved`);
-                  setForm({ source: "Gandhinagar Depot", destination: "", vehicleId: "", driverId: "", cargoWeightKg: 0, plannedDistanceKm: 0 });
+                  if (res.ok) {
+                    toast.success(`Draft saved`);
+                    setForm({ source: "Gandhinagar Depot", destination: "", vehicleId: "", driverId: "", cargoWeightKg: 0, plannedDistanceKm: 0 });
+                  } else toast.error(res.error);
                 }}
                 className="h-9 px-4 rounded-lg border border-line text-sm hover:bg-secondary"
               >
@@ -303,12 +307,12 @@ export default function TripsPage() {
                   <div className="text-right shrink-0">
                     {t.status === "Draft" && !readOnly && (
                       <div className="mt-2 flex justify-end gap-1">
-                        <button onClick={(e) => { 
+                        <button onClick={async (e) => { 
                             e.stopPropagation(); 
                             const reason = window.prompt("Reason for cancellation?");
                             if (!reason) return;
-                            cancelTrip(t.id, reason); 
-                            toast(`Trip ${t.id} cancelled`); 
+                            const res = await cancelTrip(t.id, reason); 
+                            if (res.ok) toast(`Trip ${t.id} cancelled`); else toast.error(res.error);
                           }}
                           className="text-[11px] px-2 py-1.5 rounded-md border border-danger/40 text-danger hover:bg-danger/10">
                           Cancel
@@ -333,12 +337,12 @@ export default function TripsPage() {
                           <div className="mt-2 flex gap-1">
                             <button onClick={(e) => { e.stopPropagation(); setCompletingTripId(t.id); }}
                               className="text-[11px] px-2 py-1 rounded-md border border-success/40 text-success hover:bg-success/10">Complete</button>
-                            <button onClick={(e) => { 
+                            <button onClick={async (e) => { 
                                 e.stopPropagation(); 
                                 const reason = window.prompt("Reason for cancellation?");
                                 if (!reason) return;
-                                cancelTrip(t.id, reason); 
-                                toast(`Trip ${t.id} cancelled`); 
+                                const res = await cancelTrip(t.id, reason); 
+                                if (res.ok) toast(`Trip ${t.id} cancelled`); else toast.error(res.error);
                               }}
                               className="text-[11px] px-2 py-1 rounded-md border border-danger/40 text-danger hover:bg-danger/10">Cancel</button>
                           </div>
@@ -367,13 +371,15 @@ export default function TripsPage() {
           vehicles={vehicles}
           drivers={drivers}
           onClose={() => setCompletingTripId(null)}
-          onComplete={(finalOdo: number, fuelL: number, fuelCost: number) => {
+          onComplete={async (finalOdo: number, fuelL: number, fuelCost: number) => {
             const t = trips.find((x) => x.id === completingTripId);
             const v = vehicles.find((x) => x.id === t?.vehicleId);
             const d = drivers.find((x) => x.id === t?.driverId);
-            completeTrip(completingTripId, finalOdo, fuelL, fuelCost);
-            toast.success(`Trip ${completingTripId} completed. ${v?.regNo} and ${d?.name} are now Available.`);
-            setCompletingTripId(null);
+            const res = await completeTrip(completingTripId, finalOdo, fuelL, fuelCost);
+            if (res.ok) {
+              toast.success(`Trip ${completingTripId} completed. ${v?.regNo} and ${d?.name} are now Available.`);
+              setCompletingTripId(null);
+            } else toast.error(res.error);
           }}
         />
       )}
