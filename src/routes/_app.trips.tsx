@@ -38,6 +38,7 @@ export default function TripsPage() {
   });
 
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
+  const [completingTripId, setCompletingTripId] = useState<string | null>(null);
 
   const selectedVehicle = vehicles.find((v) => v.id === form.vehicleId);
   const overCap =
@@ -253,7 +254,7 @@ export default function TripsPage() {
                         <div className="text-xs text-slate">{t.etaMinutes ? `${t.etaMinutes} min` : "In transit"}</div>
                         {!readOnly && (
                           <div className="mt-2 flex gap-1">
-                            <button onClick={(e) => { e.stopPropagation(); completeTrip(t.id, (v?.odometerKm ?? 0) + t.plannedDistanceKm, Math.round(t.plannedDistanceKm / 8)); toast.success(`Trip ${t.id} completed`); }}
+                            <button onClick={(e) => { e.stopPropagation(); setCompletingTripId(t.id); }}
                               className="text-[11px] px-2 py-1 rounded-md border border-success/40 text-success hover:bg-success/10">Complete</button>
                             <button onClick={(e) => { e.stopPropagation(); cancelTrip(t.id); toast(`Trip ${t.id} cancelled`); }}
                               className="text-[11px] px-2 py-1 rounded-md border border-danger/40 text-danger hover:bg-danger/10">Cancel</button>
@@ -271,6 +272,72 @@ export default function TripsPage() {
           <div className="mt-4 text-xs text-slate">
             On Complete: odometer → fuel log → expenses → Vehicle &amp; Driver Available
           </div>
+        </div>
+      </div>
+      {completingTripId && (
+        <CompleteTripModal
+          tripId={completingTripId}
+          trips={trips}
+          vehicles={vehicles}
+          drivers={drivers}
+          onClose={() => setCompletingTripId(null)}
+          onComplete={(finalOdo: number, fuelL: number, fuelCost: number) => {
+            const t = trips.find((x) => x.id === completingTripId);
+            const v = vehicles.find((x) => x.id === t?.vehicleId);
+            const d = drivers.find((x) => x.id === t?.driverId);
+            completeTrip(completingTripId, finalOdo, fuelL, fuelCost);
+            toast.success(`Trip ${completingTripId} completed. ${v?.regNo} and ${d?.name} are now Available.`);
+            setCompletingTripId(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function CompleteTripModal({ tripId, trips, vehicles, drivers, onClose, onComplete }: any) {
+  const trip = trips.find((t: any) => t.id === tripId);
+  const vehicle = vehicles.find((v: any) => v.id === trip?.vehicleId);
+  const startOdo = vehicle?.odometerKm ?? 0;
+  
+  const [finalOdo, setFinalOdo] = useState<number | "">("");
+  const [fuelL, setFuelL] = useState<number | "">("");
+  const [fuelCost, setFuelCost] = useState<number | "">("");
+  
+  const error = (finalOdo !== "" && +finalOdo <= startOdo) ? `Odometer must be strictly greater than ${startOdo}` : "";
+  const isValid = finalOdo !== "" && fuelL !== "" && fuelCost !== "" && !error && +finalOdo > startOdo && +fuelL >= 0 && +fuelCost >= 0;
+
+  return (
+    <div className="fixed inset-0 bg-ink/50 flex items-center justify-center z-50 p-4" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-surface rounded-xl shadow-[var(--shadow-e1)] w-full max-w-sm p-5 border border-line" onClick={(e) => e.stopPropagation()}>
+        <h3 className="font-display font-semibold mb-4 text-lg">Complete Trip {tripId}</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="label-caps block mb-1">Final Odometer (km) (Start: {startOdo})</label>
+            <input type="number" value={finalOdo} onChange={(e) => setFinalOdo(e.target.value === "" ? "" : +e.target.value)}
+              className={`w-full h-9 rounded-md border bg-canvas px-3 text-sm ${error ? 'border-danger focus:outline-danger' : 'border-line'}`} />
+            {error && <div className="text-danger text-[11px] mt-1 font-medium">{error}</div>}
+          </div>
+          <div>
+            <label className="label-caps block mb-1">Fuel Consumed (liters)</label>
+            <input type="number" value={fuelL} onChange={(e) => setFuelL(e.target.value === "" ? "" : +e.target.value)}
+              className="w-full h-9 rounded-md border border-line bg-canvas px-3 text-sm" />
+          </div>
+          <div>
+            <label className="label-caps block mb-1">Fuel Cost (₹)</label>
+            <input type="number" value={fuelCost} onChange={(e) => setFuelCost(e.target.value === "" ? "" : +e.target.value)}
+              className="w-full h-9 rounded-md border border-line bg-canvas px-3 text-sm" />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 mt-6">
+          <button onClick={onClose} className="h-9 px-4 rounded-lg border border-line text-sm hover:bg-secondary">Cancel</button>
+          <button
+            disabled={!isValid}
+            onClick={() => isValid && onComplete(+finalOdo, +fuelL, +fuelCost)}
+            className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40 shadow-[var(--shadow-e1)] hover:brightness-105"
+          >
+            Submit
+          </button>
         </div>
       </div>
     </div>

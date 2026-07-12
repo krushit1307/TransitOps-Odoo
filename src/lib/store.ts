@@ -44,7 +44,7 @@ interface DataState {
 
   createTrip: (t: Omit<Trip, "id" | "status"> & { status?: Trip["status"] }) => Trip;
   dispatchTrip: (id: string) => { ok: boolean; error?: string };
-  completeTrip: (id: string, finalOdo: number, fuelL: number) => void;
+  completeTrip: (id: string, finalOdo: number, fuelL: number, fuelCost: number) => void;
   cancelTrip: (id: string) => void;
 
   addMaintenance: (m: Omit<MaintenanceLog, "id">) => void;
@@ -113,12 +113,14 @@ export const useData = create<DataState>()((set, get) => ({
     }));
     return { ok: true };
   },
-  completeTrip: (id, finalOdo, fuelL) => {
+  completeTrip: (id, finalOdo, fuelL, fuelCost) => {
     const trip = get().trips.find((t) => t.id === id);
     if (!trip) return;
+    const vehicle = get().vehicles.find((v) => v.id === trip.vehicleId);
+    const startOdo = vehicle?.odometerKm ?? 0;
     set((s) => ({
       trips: s.trips.map((t) =>
-        t.id === id ? { ...t, status: "Completed", finalOdometerKm: finalOdo, fuelConsumedL: fuelL } : t
+        t.id === id ? { ...t, status: "Completed", finalOdometerKm: finalOdo, actualDistanceKm: finalOdo - startOdo, fuelConsumedL: fuelL } : t
       ),
     }));
     if (trip.vehicleId) {
@@ -127,7 +129,7 @@ export const useData = create<DataState>()((set, get) => ({
           v.id === trip.vehicleId ? { ...v, status: "Available", odometerKm: finalOdo } : v
         ),
         fuel: [
-          { id: nid("f"), vehicleId: trip.vehicleId!, date: new Date().toISOString().slice(0, 10), liters: fuelL, cost: Math.round(fuelL * 100) },
+          { id: nid("f"), vehicleId: trip.vehicleId!, date: new Date().toISOString().slice(0, 10), liters: fuelL, cost: fuelCost },
           ...s.fuel,
         ],
       }));
