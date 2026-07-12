@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { StatusPill } from "@/components/status-pill";
 import { useAuth, useData } from "@/lib/store";
@@ -37,6 +37,16 @@ export default function DriversPage() {
   const { drivers, addDriver, updateDriverStatus } = useData();
   const [selectedId, setSelected] = useState<string | null>(drivers[0]?.id ?? null);
   const [open, setOpen] = useState(false);
+
+  const [search, setSearch] = useState("");
+  const [statusF, setStatusF] = useState("All");
+
+  const rows = useMemo(() => {
+    return drivers.filter(d => 
+      (statusF === "All" || d.status === statusF) &&
+      (d.name.toLowerCase().includes(search.toLowerCase()) || d.licenseNo.toLowerCase().includes(search.toLowerCase()))
+    );
+  }, [drivers, search, statusF]);
 
   if (noAccess) return <div className="text-slate">Your role has no access to Drivers.</div>;
 
@@ -78,6 +88,15 @@ export default function DriversPage() {
         }
       />
 
+      <div className="flex flex-wrap gap-3 mb-4">
+        <select value={statusF} onChange={(e) => setStatusF(e.target.value)}
+          className="h-9 rounded-md border border-line bg-surface px-3 text-sm">
+          {["All", "Available", "OnTrip", "OffDuty", "Suspended"].map((o) => <option key={o}>{o}</option>)}
+        </select>
+        <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search driver name or license..."
+          className="h-9 rounded-md border border-line bg-surface px-3 text-sm min-w-64" />
+      </div>
+
       <div className="overflow-hidden rounded-xl border border-line bg-surface">
         <Table>
           <TableHeader>
@@ -93,7 +112,7 @@ export default function DriversPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {drivers.map((d) => {
+            {rows.map((d) => {
               const expired = isExpired(d.licenseExpiry);
               const expiringSoon = isExpiringSoon(d.licenseExpiry);
               return (
@@ -114,6 +133,11 @@ export default function DriversPage() {
                 </TableRow>
               );
             })}
+            {rows.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={8} className="px-4 py-8 text-center text-slate text-sm">No drivers match those filters.</TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>

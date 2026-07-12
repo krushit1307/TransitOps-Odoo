@@ -4,10 +4,11 @@ import { PageHeader } from "@/components/app-shell";
 import { StatusPill } from "@/components/status-pill";
 import { useAuth, useData } from "@/lib/store";
 import { can } from "@/lib/rbac";
-import { Plus, AlertTriangle, X, Download } from "lucide-react";
+import { Plus, AlertTriangle, X, Download, Paperclip } from "lucide-react";
 import type { Vehicle } from "@/lib/types";
 import { downloadCSV } from "@/lib/csv";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { toast } from "sonner";
 
 export default function FleetPage() {
   const user = useAuth((s) => s.user);
@@ -18,6 +19,7 @@ export default function FleetPage() {
   const [statusF, setStatusF] = useState("All");
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
+  const [mockDocs, setMockDocs] = useState<Record<string, string>>({});
 
   const rows = useMemo(
     () =>
@@ -85,6 +87,7 @@ export default function FleetPage() {
           <TableHeader>
             <TableRow className="bg-muted/50 shadow-[inset_0px_1px_2px_0px_rgba(255,255,255,1),inset_0px_-1px_4px_0px_rgba(0,0,0,0.05)] dark:shadow-[inset_0px_1px_2px_0px_rgba(255,255,255,0.1),inset_0px_-1px_2px_0px_rgba(0,0,0,0.02)]">
               <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Reg. No.</TableHead>
+              <TableHead className="label-caps px-4 py-2.5 text-center font-semibold">Docs</TableHead>
               <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Name / Model</TableHead>
               <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Type</TableHead>
               <TableHead className="label-caps px-4 py-2.5 text-right font-semibold">Capacity</TableHead>
@@ -97,6 +100,17 @@ export default function FleetPage() {
             {rows.map((v) => (
               <TableRow key={v.id} className="hover:bg-secondary/30 border-t border-line">
                 <TableCell className="px-4 py-3 font-mono text-xs">{v.regNo}</TableCell>
+                <TableCell className="px-4 py-3 text-center">
+                  {(mockDocs[v.id] || v.status === "Available") ? (
+                    <button 
+                      title={mockDocs[v.id] || "Registration_Doc.pdf"}
+                      onClick={() => toast.info(`Viewing document: ${mockDocs[v.id] || "Registration_Doc.pdf"}`)}
+                      className="inline-flex items-center justify-center p-1 rounded-md hover:bg-primary/10 transition"
+                    >
+                      <Paperclip className="h-4 w-4 text-primary cursor-pointer hover:text-ink transition" />
+                    </button>
+                  ) : <span className="text-line">—</span>}
+                </TableCell>
                 <TableCell className="px-4 py-3">{v.nameModel}</TableCell>
                 <TableCell className="px-4 py-3 text-slate">{v.type}</TableCell>
                 <TableCell className="px-4 py-3 text-right font-mono text-xs">{v.maxCapacityKg} kg</TableCell>
@@ -107,7 +121,7 @@ export default function FleetPage() {
             ))}
             {rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="px-4 py-8 text-center text-slate text-sm">No vehicles match those filters.</TableCell>
+                <TableCell colSpan={8} className="px-4 py-8 text-center text-slate text-sm">No vehicles match those filters.</TableCell>
               </TableRow>
             )}
           </TableBody>
@@ -119,18 +133,33 @@ export default function FleetPage() {
         <span><span className="font-semibold">Rule:</span> Registration No. must be unique · Retired/In Shop vehicles are hidden from Trip Dispatcher.</span>
       </div>
 
-      {open && <AddVehicleModal onClose={() => setOpen(false)} onSubmit={addVehicle} />}
+      {open && (
+        <AddVehicleModal
+          onClose={() => setOpen(false)}
+          onSubmit={addVehicle}
+          onDocAttach={(docName) => {
+            // Note: Since addVehicle doesn't return the new ID synchronously in our simple mock,
+            // we just show a toast for the demo.
+            toast.success(`Mock document "${docName}" attached to the new vehicle.`);
+          }}
+        />
+      )}
     </div>
   );
 }
 
 function AddVehicleModal({
-  onClose, onSubmit,
-}: { onClose: () => void; onSubmit: (v: Omit<Vehicle, "id">) => { ok: boolean; error?: string } }) {
+  onClose, onSubmit, onDocAttach
+}: { 
+  onClose: () => void; 
+  onSubmit: (v: Omit<Vehicle, "id">) => { ok: boolean; error?: string };
+  onDocAttach: (name: string) => void;
+}) {
   const [form, setForm] = useState<Omit<Vehicle, "id">>({
     regNo: "", nameModel: "", type: "Van", maxCapacityKg: 500, odometerKm: 0, acquisitionCost: 0, status: "Available",
   });
   const [err, setErr] = useState<string | null>(null);
+  const [docFile, setDocFile] = useState<File | null>(null);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 grid place-items-center p-4" onClick={onClose}>
@@ -143,7 +172,12 @@ function AddVehicleModal({
           onSubmit={(e) => {
             e.preventDefault();
             const r = onSubmit(form);
-            if (r.ok) onClose(); else setErr(r.error ?? "Failed to add");
+            if (r.ok) {
+              if (docFile) onDocAttach(docFile.name);
+              onClose();
+            } else {
+              setErr(r.error ?? "Failed to add");
+            }
           }}
           className="p-5 space-y-3"
         >
@@ -190,6 +224,12 @@ function AddVehicleModal({
               <label className="label-caps block mb-1">Acquisition Cost (₹)</label>
               <input type="number" value={form.acquisitionCost} onChange={(e) => setForm({ ...form, acquisitionCost: +e.target.value })}
                 className="w-full h-9 rounded-md border border-line bg-canvas px-3 text-sm" />
+            </div>
+            <div className="col-span-2 mt-2 pt-2 border-t border-line">
+              <label className="label-caps block mb-1 text-primary">Vehicle Documents (Optional)</label>
+              <input type="file" onChange={(e) => setDocFile(e.target.files?.[0] || null)}
+                className="block w-full text-sm text-slate file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer" />
+              <p className="text-[10px] text-slate mt-1">Upload Registration or Insurance PDFs (UI Mock)</p>
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">

@@ -39,6 +39,23 @@ export default function TripsPage() {
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
   const [completingTripId, setCompletingTripId] = useState<string | null>(null);
 
+  const [search, setSearch] = useState("");
+  const [statusF, setStatusF] = useState("All");
+
+  const filteredTrips = useMemo(() => {
+    return trips.filter(t => {
+      const v = vehicles.find((x) => x.id === t.vehicleId);
+      const d = drivers.find((x) => x.id === t.driverId);
+      const matchSearch = 
+        t.id.toLowerCase().includes(search.toLowerCase()) ||
+        t.source.toLowerCase().includes(search.toLowerCase()) ||
+        t.destination.toLowerCase().includes(search.toLowerCase()) ||
+        (v?.regNo.toLowerCase() || "").includes(search.toLowerCase()) ||
+        (d?.name.toLowerCase() || "").includes(search.toLowerCase());
+      return (statusF === "All" || t.status === statusF) && matchSearch;
+    });
+  }, [trips, vehicles, drivers, search, statusF]);
+
   const selectedVehicle = vehicles.find((v) => v.id === form.vehicleId);
   const overCap =
     selectedVehicle && form.cargoWeightKg > selectedVehicle.maxCapacityKg
@@ -253,10 +270,18 @@ export default function TripsPage() {
         <div className="lg:col-span-3 bg-surface border border-line rounded-xl shadow-[var(--shadow-e1)] p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-display font-semibold">Live Board</h3>
-            <span className="text-xs text-slate">{trips.length} trips</span>
+            <span className="text-xs text-slate">{filteredTrips.length} trips</span>
+          </div>
+          <div className="flex flex-wrap gap-2 mb-4">
+            <select value={statusF} onChange={(e) => setStatusF(e.target.value)}
+              className="h-8 rounded-md border border-line bg-canvas px-2 text-xs">
+              {["All", "Draft", "Dispatched", "Completed", "Cancelled"].map((o) => <option key={o}>{o}</option>)}
+            </select>
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search trips, reg, or drivers..."
+              className="h-8 rounded-md border border-line bg-canvas px-3 text-xs flex-1 min-w-0" />
           </div>
           <div className="space-y-2.5">
-            {trips.map((t) => {
+            {filteredTrips.map((t) => {
               const v = vehicles.find((x) => x.id === t.vehicleId);
               const d = drivers.find((x) => x.id === t.driverId);
               return (
@@ -326,6 +351,9 @@ export default function TripsPage() {
                 </div>
               );
             })}
+            {filteredTrips.length === 0 && (
+              <div className="text-center text-slate text-sm py-6">No trips found.</div>
+            )}
           </div>
           <div className="mt-4 text-xs text-slate">
             On Complete: odometer → fuel log → expenses → Vehicle &amp; Driver Available

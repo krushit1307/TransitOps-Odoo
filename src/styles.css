@@ -1,4 +1,4 @@
-@import "tailwindcss" source(none);
+@import "tailwindcss";
 @source "../src";
 @import "tw-animate-css";
 
@@ -112,6 +112,20 @@
   --sidebar-accent-foreground: var(--ink);
   --sidebar-border: var(--line);
   --sidebar-ring: var(--primary);
+}
+
+.dark {
+  --canvas: #0F1115;
+  --surface: #16181D;
+  --line: #272B33;
+  --ink: #F1F5F9;
+  --slate: #94A3B8;
+
+  --secondary: #1E2128;
+  --muted: #1E2128;
+  --accent: #1E2128;
+
+  --sidebar-accent: #1E2128;
 }
 
 @theme inline {
