@@ -112,6 +112,13 @@
   --sidebar-accent-foreground: var(--ink);
   --sidebar-border: var(--line);
   --sidebar-ring: var(--primary);
+
+  /* Glass Variables (Light Mode) */
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --glass-topbar-bg: rgba(255, 255, 255, 0.65);
+  --glass-topbar-border: rgba(255, 255, 255, 0.4);
+  --glass-strong-bg: rgba(255, 255, 255, 0.75);
 }
 
 .dark {
@@ -126,6 +133,13 @@
   --accent: #1E2128;
 
   --sidebar-accent: #1E2128;
+
+  /* Glass Variables (Dark Mode) */
+  --glass-bg: rgba(22, 24, 29, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-topbar-bg: rgba(15, 17, 21, 0.75);
+  --glass-topbar-border: rgba(255, 255, 255, 0.05);
+  --glass-strong-bg: rgba(22, 24, 29, 0.85);
 }
 
 @theme inline {
@@ -218,24 +232,24 @@
 }
 
 @utility glass {
-  background: rgba(255, 255, 255, 0.55);
+  background: var(--glass-bg);
   backdrop-filter: blur(12px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 8px 24px rgb(18 21 28 / 0.06);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 24px rgb(18 21 28 / 0.1);
 }
 
 @utility glass-topbar {
-  background: rgba(255, 255, 255, 0.65);
+  background: var(--glass-topbar-bg);
   backdrop-filter: blur(16px) saturate(150%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 4px 20px -8px rgb(18 21 28 / 0.08);
+  border-bottom: 1px solid var(--glass-topbar-border);
+  box-shadow: 0 4px 20px -8px rgb(18 21 28 / 0.15);
 }
 
 @utility glass-strong {
-  background: rgba(255, 255, 255, 0.75);
+  background: var(--glass-strong-bg);
   backdrop-filter: blur(20px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 20px 48px -12px rgb(18 21 28 / 0.18);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 20px 48px -12px rgb(18 21 28 / 0.2);
 }
 
 @utility dashed-route {

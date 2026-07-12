@@ -91,7 +91,7 @@ export default function LoginPage() {
           </h2>
 
           <div className="mt-10">
-            <div className="label-caps mb-3">One login, four roles</div>
+            <div className="label-caps mb-3">Role Based Access Control(RBAC)</div>
             <ul className="space-y-2 text-sm">
               {(["FleetManager", "Dispatcher", "SafetyOfficer", "FinancialAnalyst"] as Role[]).map((r) => (
                 <li key={r} className="flex items-center gap-2">

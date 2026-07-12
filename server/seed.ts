@@ -42,14 +42,14 @@ async function main() {
     await prisma.maintenanceLog.upsert({
       where: { id: m.id },
       update: {},
-      create: { id: m.id, vehicleId: m.vehicleId, serviceType: m.serviceType, cost: m.cost, date: new Date(m.date), status: m.status as any },
+      create: { id: m.id, vehicleId: m.vehicleId, serviceType: m.serviceType, cost: m.cost, date: m.date, status: m.status as any },
     });
   }
   for (const f of seedFuel) {
     await prisma.fuelLog.upsert({
       where: { id: f.id },
       update: {},
-      create: { id: f.id, vehicleId: f.vehicleId, date: new Date(f.date), liters: f.liters, cost: f.cost },
+      create: { id: f.id, vehicleId: f.vehicleId, date: f.date, liters: f.liters, cost: f.cost },
     });
   }
   for (const e of seedExpenses) {

@@ -4,11 +4,11 @@ import type { ReactNode } from "react";
 type Tone = "amber" | "blue" | "green" | "red" | "slate";
 
 const badgeStyle: Record<Tone, { bg: string; text: string }> = {
-  amber: { bg: "bg-[rgb(245_158_11_/_0.15)]", text: "text-[#B45309]" },
-  blue:  { bg: "bg-[rgb(59_130_246_/_0.15)]", text: "text-[#2563EB]" },
-  green: { bg: "bg-[rgb(16_185_129_/_0.15)]", text: "text-[#059669]" },
-  red:   { bg: "bg-[rgb(239_68_68_/_0.15)]",  text: "text-[#DC2626]" },
-  slate: { bg: "bg-[rgb(148_163_184_/_0.18)]", text: "text-[#475569]" },
+  amber: { bg: "bg-[rgb(245_158_11_/_0.15)]", text: "text-[#B45309] dark:text-[#FCD34D]" },
+  blue:  { bg: "bg-[rgb(59_130_246_/_0.15)]", text: "text-[#2563EB] dark:text-[#60A5FA]" },
+  green: { bg: "bg-[rgb(16_185_129_/_0.15)]", text: "text-[#059669] dark:text-[#34D399]" },
+  red:   { bg: "bg-[rgb(239_68_68_/_0.15)]",  text: "text-[#DC2626] dark:text-[#F87171]" },
+  slate: { bg: "bg-[rgb(148_163_184_/_0.18)]", text: "text-[#475569] dark:text-[#94A3B8]" },
 };
 
 export function KpiCard({

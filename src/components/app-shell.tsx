@@ -116,7 +116,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <input
               type="text"
               placeholder="Search vehicles, drivers, trips…"
-              className="w-full h-9 rounded-[10px] border border-line bg-white/70 backdrop-blur-sm pl-9 pr-3 text-sm placeholder:text-slate focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/25"
+              className="w-full h-9 rounded-[10px] border border-line bg-white/70 dark:bg-[#16181D]/70 dark:border-white/10 backdrop-blur-sm pl-9 pr-3 text-sm placeholder:text-slate focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/25"
             />
           </div>
           <div className="ml-auto flex items-center gap-3">
