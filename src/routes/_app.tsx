@@ -12,7 +12,7 @@ export default function AppLayout() {
 
   useEffect(() => { 
     setMounted(true); 
-    useData.getState().fetchData();
+    useData.getState().loadData();
   }, []);
   useEffect(() => {
     if (mounted && !user) navigate("/login");
