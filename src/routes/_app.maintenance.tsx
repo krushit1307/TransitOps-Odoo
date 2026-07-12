@@ -97,8 +97,12 @@ export default function MaintenancePage() {
                 <option value="Completed">Completed</option>
               </select>
             </div>
-            <button disabled={readOnly} onClick={() => { addMaintenance(form); setForm({ ...form, cost: 0 }); }}
-              className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40 hover:brightness-95 transition">
+            <button disabled={readOnly} onClick={async () => { 
+              const res = await addMaintenance(form); 
+              if (!res.ok) alert(res.error || "Failed");
+              else setForm({ ...form, cost: 0 }); 
+            }}
+              className="w-full h-9 rounded-md bg-secondary text-primary-foreground font-medium text-sm shadow-[var(--shadow-e1)] hover:opacity-90 disabled:opacity-40 hover:brightness-95 transition">
               Save Record
             </button>
           </div>

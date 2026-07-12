@@ -146,7 +146,7 @@ export default function DriversPage() {
   );
 }
 
-function AddDriverModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (d: Omit<Driver, "id">) => void }) {
+function AddDriverModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (d: Omit<Driver, "id">) => Promise<{ ok: boolean; error?: string }> }) {
   const [form, setForm] = useState<Omit<Driver, "id">>({
     name: "", licenseNo: "", category: "LMV", licenseExpiry: "2027-12-31",
     contact: "9876543210", tripCompletionPct: 0, safetyScore: 90, status: "Available",
@@ -159,7 +159,12 @@ function AddDriverModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: 
           <h3 className="font-display font-semibold">Add Driver</h3>
           <button onClick={onClose}><X className="h-4 w-4 text-slate" /></button>
         </div>
-        <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); onClose(); }} className="p-5 space-y-3">
+        <form onSubmit={async (e) => { 
+          e.preventDefault(); 
+          const res = await onSubmit(form); 
+          if (res.ok) onClose();
+          else alert(res.error || "Failed to add driver");
+        }} className="p-5 space-y-3">
           <div>
             <label className="label-caps block mb-1">Name</label>
             <input className="w-full h-9 rounded-md border border-line bg-canvas px-3 text-sm"

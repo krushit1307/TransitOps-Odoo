@@ -54,7 +54,10 @@ app.get('/api/drivers', async (req, res) => {
 
 app.post('/api/drivers', async (req, res) => {
   try {
-    const d = await prisma.driver.create({ data: { ...req.body, licenseExpiry: new Date(req.body.licenseExpiry) } });
+    const { name, licenseNo, category, licenseExpiry, contact, safetyScore, status } = req.body;
+    const d = await prisma.driver.create({ 
+      data: { name, licenseNo, category, licenseExpiry: new Date(licenseExpiry), contact, safetyScore, status } 
+    });
     res.json({ ok: true, driver: d });
   } catch (e: any) {
     res.json({ ok: false, error: e.message });
