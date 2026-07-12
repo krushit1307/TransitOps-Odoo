@@ -3,9 +3,7 @@ import { persist } from "zustand/middleware";
 import type {
   User, Role, Vehicle, Driver, Trip, MaintenanceLog, FuelLog, Expense, Settings,
 } from "./types";
-import {
-  seedUsers, seedVehicles, seedDrivers, seedTrips, seedMaintenance, seedFuel, seedExpenses, seedSettings,
-} from "./mock-data";
+import { seedSettings } from "./mock-data";
 
 const defaultRBACMatrix: Record<Role, Record<string, "full" | "view" | "none">> = {
   FleetManager:    { fleet: "full", drivers: "full", trips: "full", expenses: "full", analytics: "full" },
@@ -16,7 +14,7 @@ const defaultRBACMatrix: Record<Role, Record<string, "full" | "view" | "none">> 
 
 interface AuthState {
   user: User | null;
-  login: (email: string, password: string, role: Role) => { ok: boolean; error?: string };
+  login: (email: string, password: string, role: Role) => Promise<{ ok: boolean; error?: string }>;
   logout: () => void;
 }
 
@@ -24,15 +22,16 @@ export const useAuth = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      login: (email, password, role) => {
-        const found = seedUsers.find(
-          (u) => u.email === email && u.password === password && u.role === role
-        );
-        if (found) {
-          set({ user: { id: found.id, name: found.name, email: found.email, role: found.role } });
+      login: async (email, password, role) => {
+        const res = await fetch('/api/login', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, role })
+        }).then(r => r.json());
+        if (res.ok) {
+          set({ user: res.user });
           return { ok: true };
         }
-        return { ok: false, error: "Invalid credentials" };
+        return { ok: false, error: res.error || "Invalid credentials" };
       },
       logout: () => set({ user: null }),
     }),
@@ -50,159 +49,117 @@ interface DataState {
   settings: Settings;
   rbacMatrix: Record<Role, Record<string, "full" | "view" | "none">>;
 
-  addVehicle: (v: Omit<Vehicle, "id">) => { ok: boolean; error?: string };
-  updateVehicleStatus: (id: string, status: Vehicle["status"]) => void;
+  fetchData: () => Promise<void>;
 
-  addDriver: (d: Omit<Driver, "id">) => void;
-  updateDriverStatus: (id: string, status: Driver["status"]) => void;
+  addVehicle: (v: Omit<Vehicle, "id">) => Promise<{ ok: boolean; error?: string }>;
+  updateVehicleStatus: (id: string, status: Vehicle["status"]) => Promise<void>;
 
-  createTrip: (t: Omit<Trip, "id" | "status"> & { status?: Trip["status"] }) => Trip;
-  dispatchTrip: (id: string) => { ok: boolean; error?: string };
-  completeTrip: (id: string, finalOdo: number, fuelL: number, fuelCost: number) => void;
-  cancelTrip: (id: string, reason: string) => void;
+  addDriver: (d: Omit<Driver, "id">) => Promise<{ ok: boolean; error?: string }>;
+  updateDriverStatus: (id: string, status: Driver["status"]) => Promise<void>;
 
-  addMaintenance: (m: Omit<MaintenanceLog, "id">) => { ok: boolean; error?: string };
-  closeMaintenance: (id: string) => void;
+  createTrip: (t: Omit<Trip, "id" | "status"> & { status?: Trip["status"] }) => Promise<Trip>;
+  dispatchTrip: (id: string) => Promise<{ ok: boolean; error?: string }>;
+  completeTrip: (id: string, finalOdo: number, fuelL: number, fuelCost: number) => Promise<void>;
+  cancelTrip: (id: string, reason: string) => Promise<void>;
 
-  addFuel: (f: Omit<FuelLog, "id">) => void;
-  addExpense: (e: Omit<Expense, "id" | "total">) => void;
+  addMaintenance: (m: Omit<MaintenanceLog, "id">) => Promise<{ ok: boolean; error?: string }>;
+  closeMaintenance: (id: string) => Promise<void>;
+
+  addFuel: (f: Omit<FuelLog, "id">) => Promise<void>;
+  addExpense: (e: Omit<Expense, "id" | "total">) => Promise<void>;
 
   updateSettings: (s: Settings) => void;
   updateRBAC: (role: Role, mod: string, access: "full" | "view" | "none") => void;
 }
 
-let counter = 1000;
-const nid = (p: string) => `${p}-${Date.now().toString(36)}-${counter++}`;
-
 export const useData = create<DataState>()((set, get) => ({
-  vehicles: seedVehicles,
-  drivers: seedDrivers,
-  trips: seedTrips,
-  maintenance: seedMaintenance,
-  fuel: seedFuel,
-  expenses: seedExpenses,
+  vehicles: [],
+  drivers: [],
+  trips: [],
+  maintenance: [],
+  fuel: [],
+  expenses: [],
   settings: seedSettings,
   rbacMatrix: defaultRBACMatrix,
 
-  addVehicle: (v) => {
-    const exists = get().vehicles.some((x) => x.regNo.toLowerCase() === v.regNo.toLowerCase());
-    if (exists) return { ok: false, error: "Registration No. must be unique" };
-    set((s) => ({ vehicles: [{ ...v, id: nid("v") }, ...s.vehicles] }));
-    return { ok: true };
-  },
-  updateVehicleStatus: (id, status) =>
-    set((s) => ({ vehicles: s.vehicles.map((v) => (v.id === id ? { ...v, status } : v)) })),
-
-  addDriver: (d) => set((s) => ({ drivers: [{ ...d, id: nid("d") }, ...s.drivers] })),
-  updateDriverStatus: (id, status) =>
-    set((s) => ({ drivers: s.drivers.map((d) => (d.id === id ? { ...d, status } : d)) })),
-
-  createTrip: (t) => {
-    const trip: Trip = { ...t, id: `T-${1043 + get().trips.length}`, status: t.status ?? "Draft" };
-    set((s) => ({ trips: [trip, ...s.trips] }));
-    if (trip.status === "Dispatched") {
-      if (trip.vehicleId) get().updateVehicleStatus(trip.vehicleId, "OnTrip");
-      if (trip.driverId) get().updateDriverStatus(trip.driverId, "OnTrip");
+  fetchData: async () => {
+    try {
+      const [vehicles, drivers, trips, maintenance, fuel, expenses] = await Promise.all([
+        fetch('/api/vehicles').then(r => r.json()),
+        fetch('/api/drivers').then(r => r.json()),
+        fetch('/api/trips').then(r => r.json()),
+        fetch('/api/maintenance').then(r => r.json()),
+        fetch('/api/fuel').then(r => r.json()),
+        fetch('/api/expenses').then(r => r.json()),
+      ]);
+      set({ vehicles, drivers, trips, maintenance, fuel, expenses });
+    } catch (e) {
+      console.error("Failed to fetch data", e);
     }
+  },
+
+  addVehicle: async (v) => {
+    const res = await fetch('/api/vehicles', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(v) }).then(r => r.json());
+    if (res.ok) set((s) => ({ vehicles: [res.vehicle, ...s.vehicles] }));
+    return res;
+  },
+  updateVehicleStatus: async (id, status) => {
+    await fetch(`/api/vehicles/${id}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+    set((s) => ({ vehicles: s.vehicles.map((v) => (v.id === id ? { ...v, status } : v)) }));
+  },
+
+  addDriver: async (d) => {
+    const res = await fetch('/api/drivers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) }).then(r => r.json());
+    if (res.ok) set((s) => ({ drivers: [res.driver, ...s.drivers] }));
+    return res;
+  },
+  updateDriverStatus: async (id, status) => {
+    await fetch(`/api/drivers/${id}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+    set((s) => ({ drivers: s.drivers.map((d) => (d.id === id ? { ...d, status } : d)) }));
+  },
+
+  createTrip: async (t) => {
+    const trip = await fetch('/api/trips', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...t, status: t.status ?? "Draft" }) }).then(r => r.json());
+    set((s) => ({ trips: [trip, ...s.trips] }));
+    if (trip.status === "Dispatched") await get().fetchData();
     return trip;
   },
-  dispatchTrip: (id) => {
-    const trip = get().trips.find((t) => t.id === id);
-    if (!trip) return { ok: false, error: "Trip not found" };
-    if (!trip.vehicleId || !trip.driverId) return { ok: false, error: "Trip must have both a vehicle and a driver assigned" };
-
-    const vehicle = get().vehicles.find((v) => v.id === trip.vehicleId);
-    if (!vehicle) return { ok: false, error: "Vehicle not found" };
-    
-    const driver = get().drivers.find((d) => d.id === trip.driverId);
-    if (!driver) return { ok: false, error: "Driver not found" };
-
-    if (vehicle.status !== "Available") return { ok: false, error: `Vehicle must be Available (currently ${vehicle.status})` };
-    if (driver.status !== "Available") return { ok: false, error: `Driver must be Available (currently ${driver.status})` };
-    if (new Date(driver.licenseExpiry) < new Date()) return { ok: false, error: "Driver license is expired" };
-    if (trip.cargoWeightKg > vehicle.maxCapacityKg) return { ok: false, error: "Cargo weight exceeds vehicle capacity" };
-
-    set((s) => ({
-      trips: s.trips.map((t) => (t.id === id ? { ...t, status: "Dispatched" } : t)),
-      vehicles: s.vehicles.map((v) => (v.id === vehicle.id ? { ...v, status: "OnTrip" } : v)),
-      drivers: s.drivers.map((d) => (d.id === driver.id ? { ...d, status: "OnTrip" } : d)),
-    }));
-    return { ok: true };
+  dispatchTrip: async (id) => {
+    const res = await fetch(`/api/trips/${id}/dispatch`, { method: 'POST' }).then(r => r.json());
+    if (res.ok) await get().fetchData();
+    return res;
   },
-  completeTrip: (id, finalOdo, fuelL, fuelCost) => {
-    const trip = get().trips.find((t) => t.id === id);
-    if (!trip) return;
-    const vehicle = get().vehicles.find((v) => v.id === trip.vehicleId);
-    const startOdo = vehicle?.odometerKm ?? 0;
-    set((s) => ({
-      trips: s.trips.map((t) =>
-        t.id === id ? { ...t, status: "Completed", finalOdometerKm: finalOdo, actualDistanceKm: finalOdo - startOdo, fuelConsumedL: fuelL } : t
-      ),
-    }));
-    if (trip.vehicleId) {
-      set((s) => ({
-        vehicles: s.vehicles.map((v) =>
-          v.id === trip.vehicleId ? { ...v, status: "Available", odometerKm: finalOdo } : v
-        ),
-        fuel: [
-          { id: nid("f"), vehicleId: trip.vehicleId!, date: new Date().toISOString().slice(0, 10), liters: fuelL, cost: fuelCost },
-          ...s.fuel,
-        ],
-      }));
-    }
-    if (trip.driverId) get().updateDriverStatus(trip.driverId, "Available");
+  completeTrip: async (id, finalOdo, fuelL, fuelCost) => {
+    const res = await fetch(`/api/trips/${id}/complete`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ finalOdo, fuelL, fuelCost }) }).then(r => r.json());
+    if (res.ok) await get().fetchData();
   },
-  cancelTrip: (id, reason) => {
-    const trip = get().trips.find((t) => t.id === id);
-    if (!trip) return;
-    set((s) => ({ trips: s.trips.map((t) => (t.id === id ? { ...t, status: "Cancelled", note: reason } : t)) }));
-    if (trip.status === "Draft") return;
-    
-    if (trip.vehicleId) {
-      const vehicle = get().vehicles.find((v) => v.id === trip.vehicleId);
-      if (vehicle && vehicle.status !== "InShop") {
-        get().updateVehicleStatus(trip.vehicleId, "Available");
-      }
-    }
-    if (trip.driverId) get().updateDriverStatus(trip.driverId, "Available");
+  cancelTrip: async (id, reason) => {
+    const res = await fetch(`/api/trips/${id}/cancel`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason }) }).then(r => r.json());
+    if (res.ok) await get().fetchData();
   },
 
-  addMaintenance: (m) => {
-    const v = get().vehicles.find((x) => x.id === m.vehicleId);
-    if (v && v.status === "OnTrip") return { ok: false, error: "Cannot add maintenance for a vehicle currently OnTrip" };
-    set((s) => ({ maintenance: [{ ...m, id: nid("m") }, ...s.maintenance] }));
-    if (m.status === "InShop") get().updateVehicleStatus(m.vehicleId, "InShop");
-    else if (m.status === "Completed") {
-      if (v && v.status !== "Retired") get().updateVehicleStatus(m.vehicleId, "Available");
-    }
-    return { ok: true };
+  addMaintenance: async (m) => {
+    const res = await fetch('/api/maintenance', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(m) }).then(r => r.json());
+    if (res.ok) await get().fetchData();
+    return res;
   },
-  closeMaintenance: (id) => {
-    const m = get().maintenance.find((x) => x.id === id);
-    if (!m) return;
-    set((s) => ({ maintenance: s.maintenance.map((x) => (x.id === id ? { ...x, status: "Completed" } : x)) }));
-    const anyInShop = get().maintenance.some((x) => x.vehicleId === m.vehicleId && x.status === "InShop");
-    if (!anyInShop) {
-      const v = get().vehicles.find((x) => x.id === m.vehicleId);
-      if (v && v.status !== "Retired") get().updateVehicleStatus(m.vehicleId, "Available");
-    }
+  closeMaintenance: async (id) => {
+    const res = await fetch(`/api/maintenance/${id}/close`, { method: 'POST' }).then(r => r.json());
+    if (res.ok) await get().fetchData();
   },
 
-  addFuel: (f) => set((s) => ({ fuel: [{ ...f, id: nid("f") }, ...s.fuel] })),
-  addExpense: (e) => {
-    const total = (e.toll || 0) + (e.other || 0) + (e.maintenanceLinkedCost || 0);
-    set((s) => ({ expenses: [{ ...e, id: nid("e"), total }, ...s.expenses] }));
+  addFuel: async (f) => {
+    await fetch('/api/fuel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(f) });
+    await get().fetchData();
+  },
+  addExpense: async (e) => {
+    await fetch('/api/expenses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(e) });
+    await get().fetchData();
   },
 
   updateSettings: (s) => set({ settings: s }),
   updateRBAC: (role, mod, access) =>
     set((s) => ({
-      rbacMatrix: {
-        ...s.rbacMatrix,
-        [role]: {
-          ...s.rbacMatrix[role],
-          [mod]: access,
-        },
-      },
+      rbacMatrix: { ...s.rbacMatrix, [role]: { ...s.rbacMatrix[role], [mod]: access } },
     })),
 }));

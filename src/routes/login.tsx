@@ -35,7 +35,7 @@ export default function LoginPage() {
     if (user) navigate(redirects[user.role] || "/dashboard");
   }, [user, navigate]);
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (locked) return;
 
@@ -45,7 +45,7 @@ export default function LoginPage() {
       return;
     }
 
-    const res = login(trimmedEmail, password, role);
+    const res = await login(trimmedEmail, password, role);
     if (res.ok) {
       setError(null);
       setAttemptsMap((prev) => ({ ...prev, [trimmedEmail]: 0 }));

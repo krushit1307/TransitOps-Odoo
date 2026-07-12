@@ -2,8 +2,7 @@ import { useNavigate, Outlet } from "react-router-dom";
 
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
-import { useAuth } from "@/lib/store";
-
+import { useAuth, useData } from "@/lib/store";
 
 
 export default function AppLayout() {
@@ -11,7 +10,10 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => { 
+    setMounted(true); 
+    useData.getState().fetchData();
+  }, []);
   useEffect(() => {
     if (mounted && !user) navigate("/login");
   }, [mounted, user, navigate]);

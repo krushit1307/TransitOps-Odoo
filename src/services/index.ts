@@ -30,8 +30,8 @@ export const driverService = {
 export const tripService = {
   async list(): Promise<Trip[]> { await delay(); return useData.getState().trips; },
   async create(t: Omit<Trip, "id" | "status"> & { status?: Trip["status"] }) { await delay(); return useData.getState().createTrip(t); },
-  async complete(id: string, odo: number, fuel: number) { await delay(); useData.getState().completeTrip(id, odo, fuel); },
-  async cancel(id: string) { await delay(); useData.getState().cancelTrip(id); },
+  async complete(id: string, odo: number, fuelL: number, fuelCost: number) { await delay(); useData.getState().completeTrip(id, odo, fuelL, fuelCost); },
+  async cancel(id: string, reason: string) { await delay(); useData.getState().cancelTrip(id, reason); },
 };
 
 // Maintenance

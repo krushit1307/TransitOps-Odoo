@@ -288,9 +288,9 @@ export default function TripsPage() {
                           className="text-[11px] px-2 py-1.5 rounded-md border border-danger/40 text-danger hover:bg-danger/10">
                           Cancel
                         </button>
-                        <button onClick={(e) => {
+                        <button onClick={async (e) => {
                           e.stopPropagation();
-                          const res = dispatchTrip(t.id);
+                          const res = await dispatchTrip(t.id);
                           if (!res.ok) {
                             toast.error(res.error);
                           } else {
