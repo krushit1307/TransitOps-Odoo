@@ -125,7 +125,11 @@ export default function LoginPage() {
               </div>
               <div>
                 <label className="label-caps block mb-1.5">Role (RBAC)</label>
-                <select value={role} onChange={(e) => setRole(e.target.value as Role)}
+                <select value={role} onChange={(e) => {
+                    const r = e.target.value as Role;
+                    setRole(r);
+                    setEmail(roleEmails[r]);
+                  }}
                   className="w-full h-10 rounded-md border border-line bg-canvas px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/50">
                   <option value="FleetManager">Fleet Manager</option>
                   <option value="Dispatcher">Dispatcher</option>
@@ -147,6 +151,17 @@ export default function LoginPage() {
                 disabled={locked}
                 className="w-full h-10 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:brightness-105 disabled:opacity-40 disabled:cursor-not-allowed shadow-[var(--shadow-e2)]"
               >{locked ? "Locked" : "Sign In"}</button>
+            </div>
+
+            <div className="mt-6 p-4 bg-primary/5 rounded-lg border border-primary/20 text-sm text-slate">
+              <div className="font-semibold text-primary mb-1">Demo Credentials</div>
+              <p>Password for all roles: <code className="bg-canvas px-1.5 py-0.5 rounded font-mono text-xs border border-line">Transit@123</code></p>
+              <ul className="mt-2 space-y-1 text-xs">
+                <li><span className="font-medium text-foreground">Fleet Mgr:</span> fleet@transitops.demo</li>
+                <li><span className="font-medium text-foreground">Dispatcher:</span> dispatch@transitops.demo</li>
+                <li><span className="font-medium text-foreground">Safety:</span> safety@transitops.demo</li>
+                <li><span className="font-medium text-foreground">Finance:</span> finance@transitops.demo</li>
+              </ul>
             </div>
 
             <div className="mt-8 border-t border-line pt-5">
