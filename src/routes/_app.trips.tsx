@@ -17,7 +17,7 @@ export default function TripsPage() {
   const readOnly = access === "view";
   const noAccess = access === "none";
 
-  const { vehicles, drivers, trips, createTrip, completeTrip, cancelTrip } = useData();
+  const { vehicles, drivers, trips, createTrip, dispatchTrip, completeTrip, cancelTrip } = useData();
 
   const availableVehicles = useMemo(
     () => vehicles.filter((v) => v.status === "Available"),
@@ -161,6 +161,7 @@ export default function TripsPage() {
                     vehicleId: form.vehicleId, driverId: form.driverId,
                     cargoWeightKg: form.cargoWeightKg, plannedDistanceKm: form.plannedDistanceKm,
                     etaMinutes: Math.max(20, Math.round(form.plannedDistanceKm * 1.4)),
+                    status: "Dispatched",
                   });
                   toast.success(`Trip dispatched to ${form.destination}`);
                   setForm({ source: "Delhi Depot", destination: "", vehicleId: "", driverId: "", cargoWeightKg: 0, plannedDistanceKm: 0 });
@@ -169,7 +170,22 @@ export default function TripsPage() {
               >
                 {overCap ? "Dispatch (Blocked)" : "Dispatch"}
               </button>
-              <button className="h-9 px-4 rounded-lg border border-line text-sm hover:bg-secondary">Clear</button>
+              <button
+                onClick={() => {
+                  createTrip({
+                    source: form.source || "—", destination: form.destination || "—",
+                    vehicleId: form.vehicleId || null, driverId: form.driverId || null,
+                    cargoWeightKg: form.cargoWeightKg, plannedDistanceKm: form.plannedDistanceKm,
+                    status: "Draft",
+                  });
+                  toast.success(`Draft saved`);
+                  setForm({ source: "Delhi Depot", destination: "", vehicleId: "", driverId: "", cargoWeightKg: 0, plannedDistanceKm: 0 });
+                }}
+                className="h-9 px-4 rounded-lg border border-line text-sm hover:bg-secondary"
+              >
+                Save Draft
+              </button>
+              <button onClick={() => setForm({ source: "Delhi Depot", destination: "", vehicleId: "", driverId: "", cargoWeightKg: 0, plannedDistanceKm: 0 })} className="h-9 px-4 rounded-lg border border-line text-sm hover:bg-secondary">Clear</button>
             </div>
           </div>
         </div>
@@ -192,15 +208,25 @@ export default function TripsPage() {
                       <StatusPill status={t.status} />
                     </div>
                     <div className="text-sm mt-1 truncate">
-                      <span className="text-slate">{t.source}</span>
+                      <span className="text-slate">{t.source || "—"}</span>
                       <span className="mx-2 text-primary">→</span>
-                      <span>{t.destination}</span>
+                      <span>{t.destination || "—"}</span>
                     </div>
                     <div className="text-xs text-slate mt-0.5 font-mono">
-                      {v?.regNo ?? "Unassigned"} · {d?.name ?? "No driver"} · {t.cargoWeightKg} kg
+                      {v?.regNo ?? "Unassigned"} · {d?.name ?? "Unassigned"} · {t.cargoWeightKg} kg
                     </div>
                   </div>
                   <div className="text-right shrink-0">
+                    {t.status === "Draft" && !readOnly && (
+                      <div className="mt-2 flex justify-end">
+                        <button onClick={() => {
+                          dispatchTrip(t.id);
+                          toast.success(`Trip ${t.id} dispatched`);
+                        }} className="text-[11px] px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:brightness-105 shadow-[var(--shadow-e1)]">
+                          Dispatch
+                        </button>
+                      </div>
+                    )}
                     {t.status === "Dispatched" && (
                       <>
                         <div className="text-xs text-slate">{t.etaMinutes ? `${t.etaMinutes} min` : "In transit"}</div>

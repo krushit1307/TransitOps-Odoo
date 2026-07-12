@@ -82,7 +82,7 @@ export const useData = create<DataState>()((set, get) => ({
     set((s) => ({ drivers: s.drivers.map((d) => (d.id === id ? { ...d, status } : d)) })),
 
   createTrip: (t) => {
-    const trip: Trip = { ...t, id: `T-${1043 + get().trips.length}`, status: t.status ?? "Dispatched" };
+    const trip: Trip = { ...t, id: `T-${1043 + get().trips.length}`, status: t.status ?? "Draft" };
     set((s) => ({ trips: [trip, ...s.trips] }));
     if (trip.status === "Dispatched") {
       if (trip.vehicleId) get().updateVehicleStatus(trip.vehicleId, "OnTrip");
