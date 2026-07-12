@@ -16,11 +16,11 @@ export default function LoginPage() {
   const [password, setPassword] = useState("Transit@123");
   const [role, setRole] = useState<Role>("FleetManager");
   const [remember, setRemember] = useState(true);
-  
+
   // Map of email -> failed attempts
   const [attemptsMap, setAttemptsMap] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
-  
+
   const currentAttempts = attemptsMap[email] || 0;
   const locked = currentAttempts >= 5;
 
@@ -45,13 +45,13 @@ export default function LoginPage() {
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (locked) return;
-    
+
     const trimmedEmail = email.trim();
     if (trimmedEmail.length === 0 || password.length === 0) {
       setError("Invalid credentials");
       return;
     }
-    
+
     const res = login(trimmedEmail, password, role);
     if (res.ok) {
       setError(null);
@@ -125,11 +125,7 @@ export default function LoginPage() {
               </div>
               <div>
                 <label className="label-caps block mb-1.5">Role (RBAC)</label>
-                <select value={role} onChange={(e) => {
-                    const newRole = e.target.value as Role;
-                    setRole(newRole);
-                    setEmail(roleEmails[newRole]);
-                  }}
+                <select value={role} onChange={(e) => setRole(e.target.value as Role)}
                   className="w-full h-10 rounded-md border border-line bg-canvas px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/50">
                   <option value="FleetManager">Fleet Manager</option>
                   <option value="Dispatcher">Dispatcher</option>

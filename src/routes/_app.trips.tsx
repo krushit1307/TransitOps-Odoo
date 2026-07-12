@@ -4,10 +4,9 @@ import { PageHeader } from "@/components/app-shell";
 import { StatusPill } from "@/components/status-pill";
 import { useAuth, useData } from "@/lib/store";
 import { can } from "@/lib/rbac";
-import { AlertCircle, Check } from "lucide-react";
+import { AlertCircle, Check, Download } from "lucide-react";
 import { toast } from "sonner";
-
-
+import { downloadCSV } from "@/lib/csv";
 
 const isExpired = (iso: string) => new Date(iso) < new Date();
 
@@ -17,7 +16,7 @@ export default function TripsPage() {
   const readOnly = access === "view";
   const noAccess = access === "none";
 
-  const { vehicles, drivers, trips, createTrip, completeTrip, cancelTrip } = useData();
+  const { vehicles, drivers, trips, createTrip, dispatchTrip, completeTrip, cancelTrip } = useData();
 
   const availableVehicles = useMemo(
     () => vehicles.filter((v) => v.status === "Available"),
@@ -29,13 +28,16 @@ export default function TripsPage() {
   );
 
   const [form, setForm] = useState({
-    source: "Delhi Depot",
+    source: "Gandhinagar Depot",
     destination: "",
     vehicleId: "",
     driverId: "",
     cargoWeightKg: 0,
     plannedDistanceKm: 0,
   });
+
+  const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
+  const [completingTripId, setCompletingTripId] = useState<string | null>(null);
 
   const selectedVehicle = vehicles.find((v) => v.id === form.vehicleId);
   const overCap =
@@ -46,39 +48,96 @@ export default function TripsPage() {
   const canDispatch =
     !readOnly && form.destination && form.vehicleId && form.driverId && form.cargoWeightKg > 0 && !overCap;
 
-
   if (noAccess) return <div className="text-slate">Your role has no access to Trips.</div>;
+
+  const handleExportCSV = () => {
+    downloadCSV(
+      trips,
+      [
+        { key: "id", label: "Trip ID" },
+        { key: "status", label: "Status" },
+        { key: "source", label: "Source" },
+        { key: "destination", label: "Destination" },
+        {
+          key: "vehicleId",
+          label: "Vehicle Registration",
+          transform: (v) => {
+            const veh = vehicles.find((x) => x.id === v);
+            return veh ? veh.regNo : "Unassigned";
+          },
+        },
+        {
+          key: "driverId",
+          label: "Driver Name",
+          transform: (d) => {
+            const drv = drivers.find((x) => x.id === d);
+            return drv ? drv.name : "Unassigned";
+          },
+        },
+        { key: "cargoWeightKg", label: "Cargo Weight (kg)" },
+        { key: "plannedDistanceKm", label: "Planned Distance (km)" },
+        { key: "finalOdometerKm", label: "Final Odometer (km)" },
+        { key: "fuelConsumedL", label: "Fuel Consumed (L)" },
+        { key: "etaMinutes", label: "ETA (min)" },
+        { key: "note", label: "Note / Reason" },
+      ],
+      "trips_list"
+    );
+  };
 
   return (
     <div>
-      <PageHeader title="Trip Dispatcher" subtitle="Assign a vehicle and driver to a new run — capacity and compliance enforced." />
+      <PageHeader
+        title="Trip Dispatcher"
+        subtitle="Assign a vehicle and driver to a new run — capacity and compliance enforced."
+        actions={
+          <button onClick={handleExportCSV}
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-line text-sm hover:bg-secondary/50 transition">
+            <Download className="h-4 w-4" /> Export CSV
+          </button>
+        }
+      />
 
       {/* Lifecycle stepper */}
       <div className="bg-surface border border-line rounded-xl p-5 mb-6 shadow-[var(--shadow-e1)]">
-        <div className="label-caps mb-5">Trip Lifecycle</div>
+        <div className="flex items-center justify-between mb-5">
+          <div className="label-caps">Trip Lifecycle</div>
+          <div className="text-xs text-slate font-medium">
+            {selectedTripId ? `Showing actual state for ${selectedTripId}` : "Select a trip from Live Board"}
+          </div>
+        </div>
         <div className="relative flex items-center justify-between max-w-3xl mx-auto px-2">
           <div className="absolute left-6 right-6 top-4 h-[2px] dashed-route" />
-          {[
-            { key: "Draft", label: "Draft", active: false, done: false },
-            { key: "Dispatched", label: "Dispatched", active: true, done: false },
-            { key: "Completed", label: "Completed", active: false, done: false },
-            { key: "Cancelled", label: "Cancelled", active: false, done: false, terminal: true },
-          ].map((s) => (
-            <div key={s.key} className="relative z-10 flex flex-col items-center gap-2">
-              <div
-                className={`h-8 w-8 rounded-full border-2 grid place-items-center bg-surface font-mono text-xs ${
-                  s.active
-                    ? "border-primary bg-primary text-primary-foreground pulse-ring"
-                    : s.terminal
-                    ? "border-line text-slate"
-                    : "border-line text-slate"
-                }`}
-              >
-                {s.active ? <Check className="h-4 w-4" /> : s.terminal ? "×" : ""}
+          {(() => {
+            const t = trips.find(x => x.id === selectedTripId);
+            const isCancelled = t?.status === "Cancelled";
+            const currentIdx = t ? ["Draft", "Dispatched", "Completed", "Cancelled"].indexOf(t.status) : -1;
+            return [
+              { key: "Draft", label: "Draft", active: t?.status === "Draft", done: t && currentIdx > 0 && !isCancelled, terminal: false },
+              { key: "Dispatched", label: "Dispatched", active: t?.status === "Dispatched", done: t?.status === "Completed", terminal: false },
+              { key: "Completed", label: "Completed", active: t?.status === "Completed", done: t?.status === "Completed", terminal: false },
+              { key: "Cancelled", label: "Cancelled", active: isCancelled, done: false, terminal: true },
+            ].map((s) => (
+              <div key={s.key} className="relative z-10 flex flex-col items-center gap-2">
+                <div
+                  className={`h-8 w-8 rounded-full border-2 grid place-items-center bg-surface font-mono text-xs transition-colors ${
+                    s.active && !s.terminal
+                      ? "border-primary bg-primary text-primary-foreground pulse-ring"
+                      : s.active && s.terminal
+                      ? "border-danger bg-danger text-danger-foreground pulse-ring"
+                      : s.done
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : s.terminal
+                      ? "border-line text-slate"
+                      : "border-line text-slate"
+                  }`}
+                >
+                  {(s.active && !s.terminal) || s.done ? <Check className="h-4 w-4" /> : s.terminal ? "×" : ""}
+                </div>
+                <span className={`text-xs font-medium ${s.active || s.done ? "text-ink" : "text-slate"}`}>{s.label}</span>
               </div>
-              <span className={`text-xs font-medium ${s.active ? "text-ink" : "text-slate"}`}>{s.label}</span>
-            </div>
-          ))}
+            ));
+          })()}
         </div>
       </div>
 
@@ -94,7 +153,7 @@ export default function TripsPage() {
               </Field>
               <Field label="Destination">
                 <input value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })}
-                  className="w-full h-9 rounded-md border border-line bg-canvas px-3 text-sm" placeholder="e.g. Gurugram Hub" />
+                  className="w-full h-9 rounded-md border border-line bg-canvas px-3 text-sm" placeholder="e.g. Ahmedabad Hub" />
               </Field>
             </div>
             <Field label="Vehicle (available only)">
@@ -161,15 +220,31 @@ export default function TripsPage() {
                     vehicleId: form.vehicleId, driverId: form.driverId,
                     cargoWeightKg: form.cargoWeightKg, plannedDistanceKm: form.plannedDistanceKm,
                     etaMinutes: Math.max(20, Math.round(form.plannedDistanceKm * 1.4)),
+                    status: "Dispatched",
                   });
                   toast.success(`Trip dispatched to ${form.destination}`);
-                  setForm({ source: "Delhi Depot", destination: "", vehicleId: "", driverId: "", cargoWeightKg: 0, plannedDistanceKm: 0 });
+                  setForm({ source: "Gandhinagar Depot", destination: "", vehicleId: "", driverId: "", cargoWeightKg: 0, plannedDistanceKm: 0 });
                 }}
                 className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40 shadow-[var(--shadow-e1)] hover:brightness-105"
               >
                 {overCap ? "Dispatch (Blocked)" : "Dispatch"}
               </button>
-              <button className="h-9 px-4 rounded-lg border border-line text-sm hover:bg-secondary">Clear</button>
+              <button
+                onClick={() => {
+                  createTrip({
+                    source: form.source || "—", destination: form.destination || "—",
+                    vehicleId: form.vehicleId || null, driverId: form.driverId || null,
+                    cargoWeightKg: form.cargoWeightKg, plannedDistanceKm: form.plannedDistanceKm,
+                    status: "Draft",
+                  });
+                  toast.success(`Draft saved`);
+                  setForm({ source: "Gandhinagar Depot", destination: "", vehicleId: "", driverId: "", cargoWeightKg: 0, plannedDistanceKm: 0 });
+                }}
+                className="h-9 px-4 rounded-lg border border-line text-sm hover:bg-secondary"
+              >
+                Save Draft
+              </button>
+              <button onClick={() => setForm({ source: "Gandhinagar Depot", destination: "", vehicleId: "", driverId: "", cargoWeightKg: 0, plannedDistanceKm: 0 })} className="h-9 px-4 rounded-lg border border-line text-sm hover:bg-secondary">Clear</button>
             </div>
           </div>
         </div>
@@ -185,30 +260,61 @@ export default function TripsPage() {
               const v = vehicles.find((x) => x.id === t.vehicleId);
               const d = drivers.find((x) => x.id === t.driverId);
               return (
-                <div key={t.id} className="border border-line rounded-md p-3 flex items-center gap-4 hover:bg-secondary/30">
+                <div key={t.id} onClick={() => setSelectedTripId(t.id)} className={`border rounded-md p-3 flex items-center gap-4 cursor-pointer transition-colors ${selectedTripId === t.id ? 'bg-secondary/50 border-primary/40 shadow-sm' : 'border-line hover:bg-secondary/30'}`}>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs">{t.id}</span>
                       <StatusPill status={t.status} />
                     </div>
                     <div className="text-sm mt-1 truncate">
-                      <span className="text-slate">{t.source}</span>
+                      <span className="text-slate">{t.source || "—"}</span>
                       <span className="mx-2 text-primary">→</span>
-                      <span>{t.destination}</span>
+                      <span>{t.destination || "—"}</span>
                     </div>
                     <div className="text-xs text-slate mt-0.5 font-mono">
-                      {v?.regNo ?? "Unassigned"} · {d?.name ?? "No driver"} · {t.cargoWeightKg} kg
+                      {v?.regNo ?? "Unassigned"} · {d?.name ?? "Unassigned"} · {t.cargoWeightKg} kg
                     </div>
                   </div>
                   <div className="text-right shrink-0">
+                    {t.status === "Draft" && !readOnly && (
+                      <div className="mt-2 flex justify-end gap-1">
+                        <button onClick={(e) => { 
+                            e.stopPropagation(); 
+                            const reason = window.prompt("Reason for cancellation?");
+                            if (!reason) return;
+                            cancelTrip(t.id, reason); 
+                            toast(`Trip ${t.id} cancelled`); 
+                          }}
+                          className="text-[11px] px-2 py-1.5 rounded-md border border-danger/40 text-danger hover:bg-danger/10">
+                          Cancel
+                        </button>
+                        <button onClick={(e) => {
+                          e.stopPropagation();
+                          const res = dispatchTrip(t.id);
+                          if (!res.ok) {
+                            toast.error(res.error);
+                          } else {
+                            toast.success(`Trip ${t.id} dispatched`);
+                          }
+                        }} className="text-[11px] px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:brightness-105 shadow-[var(--shadow-e1)]">
+                          Dispatch
+                        </button>
+                      </div>
+                    )}
                     {t.status === "Dispatched" && (
                       <>
                         <div className="text-xs text-slate">{t.etaMinutes ? `${t.etaMinutes} min` : "In transit"}</div>
                         {!readOnly && (
                           <div className="mt-2 flex gap-1">
-                            <button onClick={() => { completeTrip(t.id, (v?.odometerKm ?? 0) + t.plannedDistanceKm, Math.round(t.plannedDistanceKm / 8)); toast.success(`Trip ${t.id} completed`); }}
+                            <button onClick={(e) => { e.stopPropagation(); setCompletingTripId(t.id); }}
                               className="text-[11px] px-2 py-1 rounded-md border border-success/40 text-success hover:bg-success/10">Complete</button>
-                            <button onClick={() => { cancelTrip(t.id); toast(`Trip ${t.id} cancelled`); }}
+                            <button onClick={(e) => { 
+                                e.stopPropagation(); 
+                                const reason = window.prompt("Reason for cancellation?");
+                                if (!reason) return;
+                                cancelTrip(t.id, reason); 
+                                toast(`Trip ${t.id} cancelled`); 
+                              }}
                               className="text-[11px] px-2 py-1 rounded-md border border-danger/40 text-danger hover:bg-danger/10">Cancel</button>
                           </div>
                         )}
@@ -224,6 +330,72 @@ export default function TripsPage() {
           <div className="mt-4 text-xs text-slate">
             On Complete: odometer → fuel log → expenses → Vehicle &amp; Driver Available
           </div>
+        </div>
+      </div>
+      {completingTripId && (
+        <CompleteTripModal
+          tripId={completingTripId}
+          trips={trips}
+          vehicles={vehicles}
+          drivers={drivers}
+          onClose={() => setCompletingTripId(null)}
+          onComplete={(finalOdo: number, fuelL: number, fuelCost: number) => {
+            const t = trips.find((x) => x.id === completingTripId);
+            const v = vehicles.find((x) => x.id === t?.vehicleId);
+            const d = drivers.find((x) => x.id === t?.driverId);
+            completeTrip(completingTripId, finalOdo, fuelL, fuelCost);
+            toast.success(`Trip ${completingTripId} completed. ${v?.regNo} and ${d?.name} are now Available.`);
+            setCompletingTripId(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function CompleteTripModal({ tripId, trips, vehicles, drivers, onClose, onComplete }: any) {
+  const trip = trips.find((t: any) => t.id === tripId);
+  const vehicle = vehicles.find((v: any) => v.id === trip?.vehicleId);
+  const startOdo = vehicle?.odometerKm ?? 0;
+  
+  const [finalOdo, setFinalOdo] = useState<number | "">("");
+  const [fuelL, setFuelL] = useState<number | "">("");
+  const [fuelCost, setFuelCost] = useState<number | "">("");
+  
+  const error = (finalOdo !== "" && +finalOdo <= startOdo) ? `Odometer must be strictly greater than ${startOdo}` : "";
+  const isValid = finalOdo !== "" && fuelL !== "" && fuelCost !== "" && !error && +finalOdo > startOdo && +fuelL >= 0 && +fuelCost >= 0;
+
+  return (
+    <div className="fixed inset-0 bg-ink/50 flex items-center justify-center z-50 p-4" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-surface rounded-xl shadow-[var(--shadow-e1)] w-full max-w-sm p-5 border border-line" onClick={(e) => e.stopPropagation()}>
+        <h3 className="font-display font-semibold mb-4 text-lg">Complete Trip {tripId}</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="label-caps block mb-1">Final Odometer (km) (Start: {startOdo})</label>
+            <input type="number" value={finalOdo} onChange={(e) => setFinalOdo(e.target.value === "" ? "" : +e.target.value)}
+              className={`w-full h-9 rounded-md border bg-canvas px-3 text-sm ${error ? 'border-danger focus:outline-danger' : 'border-line'}`} />
+            {error && <div className="text-danger text-[11px] mt-1 font-medium">{error}</div>}
+          </div>
+          <div>
+            <label className="label-caps block mb-1">Fuel Consumed (liters)</label>
+            <input type="number" value={fuelL} onChange={(e) => setFuelL(e.target.value === "" ? "" : +e.target.value)}
+              className="w-full h-9 rounded-md border border-line bg-canvas px-3 text-sm" />
+          </div>
+          <div>
+            <label className="label-caps block mb-1">Fuel Cost (₹)</label>
+            <input type="number" value={fuelCost} onChange={(e) => setFuelCost(e.target.value === "" ? "" : +e.target.value)}
+              className="w-full h-9 rounded-md border border-line bg-canvas px-3 text-sm" />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 mt-6">
+          <button onClick={onClose} className="h-9 px-4 rounded-lg border border-line text-sm hover:bg-secondary">Cancel</button>
+          <button
+            disabled={!isValid}
+            onClick={() => isValid && onComplete(+finalOdo, +fuelL, +fuelCost)}
+            className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40 shadow-[var(--shadow-e1)] hover:brightness-105"
+          >
+            Submit
+          </button>
         </div>
       </div>
     </div>

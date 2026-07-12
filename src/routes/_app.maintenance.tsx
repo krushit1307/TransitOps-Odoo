@@ -1,12 +1,11 @@
-
 import { useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { StatusPill } from "@/components/status-pill";
 import { useAuth, useData } from "@/lib/store";
 import { can } from "@/lib/rbac";
-import { AlertTriangle, ArrowRight } from "lucide-react";
-
-
+import { AlertTriangle, ArrowRight, Download } from "lucide-react";
+import { downloadCSV } from "@/lib/csv";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function MaintenancePage() {
   const user = useAuth((s) => s.user);
@@ -24,9 +23,40 @@ export default function MaintenancePage() {
 
   if (noAccess) return <div className="text-slate">Your role has no access to Maintenance.</div>;
 
+  const handleExportCSV = () => {
+    downloadCSV(
+      maintenance,
+      [
+        { key: "id", label: "Record ID" },
+        {
+          key: "vehicleId",
+          label: "Vehicle Registration",
+          transform: (vId: string) => {
+            const v = vehicles.find((x) => x.id === vId);
+            return v ? v.regNo : "Unknown";
+          },
+        },
+        { key: "serviceType", label: "Service Type" },
+        { key: "cost", label: "Cost (INR)" },
+        { key: "date", label: "Date" },
+        { key: "status", label: "Status" },
+      ],
+      "maintenance_logs"
+    );
+  };
+
   return (
     <div>
-      <PageHeader title="Maintenance" subtitle="Log service records; vehicles automatically move in and out of the dispatch pool." />
+      <PageHeader
+        title="Maintenance"
+        subtitle="Log service records; vehicles automatically move in and out of the dispatch pool."
+        actions={
+          <button onClick={handleExportCSV}
+            className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-line text-sm hover:bg-secondary/50 transition">
+            <Download className="h-4 w-4" /> Export CSV
+          </button>
+        }
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Form */}
@@ -68,7 +98,7 @@ export default function MaintenancePage() {
               </select>
             </div>
             <button disabled={readOnly} onClick={() => { addMaintenance(form); setForm({ ...form, cost: 0 }); }}
-              className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40">
+              className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40 hover:brightness-95 transition">
               Save Record
             </button>
           </div>
@@ -95,42 +125,45 @@ export default function MaintenancePage() {
             <h3 className="font-display font-semibold">Service Log</h3>
             <span className="text-xs text-slate">{maintenance.length} records</span>
           </div>
-          <table className="w-full text-sm">
-            <thead className="bg-secondary/50">
-              <tr className="text-left label-caps">
-                <th className="px-4 py-2.5">Vehicle</th>
-                <th className="px-4 py-2.5">Service</th>
-                <th className="px-4 py-2.5">Date</th>
-                <th className="px-4 py-2.5 text-right">Cost</th>
-                <th className="px-4 py-2.5">Status</th>
-                <th className="px-4 py-2.5"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {maintenance.map((m) => {
-                const v = vehicles.find((x) => x.id === m.vehicleId);
-                return (
-                  <tr key={m.id} className="border-t border-line hover:bg-secondary/30">
-                    <td className="px-4 py-3 font-mono text-xs">{v?.regNo}</td>
-                    <td className="px-4 py-3">{m.serviceType}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-slate">{m.date}</td>
-                    <td className="px-4 py-3 text-right font-mono text-xs">₹{m.cost.toLocaleString()}</td>
-                    <td className="px-4 py-3"><StatusPill status={m.status} /></td>
-                    <td className="px-4 py-3 text-right">
-                      {!readOnly && m.status === "InShop" && (
-                        <button onClick={() => closeMaintenance(m.id)}
-                          className="text-[11px] px-2 py-1 rounded border border-success/40 text-success hover:bg-success/10">
-                          Close
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="overflow-hidden rounded-xl border border-line m-4 bg-surface">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50 shadow-[inset_0px_1px_2px_0px_rgba(255,255,255,1),inset_0px_-1px_4px_0px_rgba(0,0,0,0.05)] dark:shadow-[inset_0px_1px_2px_0px_rgba(255,255,255,0.1),inset_0px_-1px_2px_0px_rgba(0,0,0,0.02)]">
+                  <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Vehicle</TableHead>
+                  <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Service</TableHead>
+                  <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Date</TableHead>
+                  <TableHead className="label-caps px-4 py-2.5 text-right font-semibold">Cost</TableHead>
+                  <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Status</TableHead>
+                  <TableHead className="px-4 py-2.5"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {maintenance.map((m) => {
+                  const v = vehicles.find((x) => x.id === m.vehicleId);
+                  return (
+                    <TableRow key={m.id} className="hover:bg-secondary/30 border-t border-line">
+                      <TableCell className="px-4 py-3 font-mono text-xs">{v?.regNo}</TableCell>
+                      <TableCell className="px-4 py-3">{m.serviceType}</TableCell>
+                      <TableCell className="px-4 py-3 font-mono text-xs text-slate">{m.date}</TableCell>
+                      <TableCell className="px-4 py-3 text-right font-mono text-xs">₹{m.cost.toLocaleString()}</TableCell>
+                      <TableCell className="px-4 py-3"><StatusPill status={m.status} /></TableCell>
+                      <TableCell className="px-4 py-3 text-right">
+                        {!readOnly && m.status === "InShop" && (
+                          <button onClick={() => closeMaintenance(m.id)}
+                            className="text-[11px] px-2 py-1 rounded border border-success/40 text-success hover:bg-success/10 transition">
+                            Close
+                          </button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
     </div>
   );
 }
+

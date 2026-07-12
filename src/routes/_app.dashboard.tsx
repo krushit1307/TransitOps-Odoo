@@ -5,42 +5,30 @@ import { StatusPill } from "@/components/status-pill";
 import { useData } from "@/lib/store";
 import { Truck, CheckCircle2, Wrench, Route as RouteIcon, Clock, Users, Gauge } from "lucide-react";
 import { useState } from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-
+const pad = (n: number | string) => String(n).padStart(2, "0");
 
 export default function Dashboard() {
   const { vehicles, drivers, trips } = useData();
   const [typeF, setTypeF] = useState("All");
   const [statusF, setStatusF] = useState("All");
-  const [regionF, setRegionF] = useState("All");
-
-  const getRegion = (id: string) => (parseInt(id.replace(/\D/g, "") || "0") % 2 === 0 ? "South" : "North");
 
   const filteredV = vehicles.filter(
-    (v) => (typeF === "All" || v.type === typeF) && (statusF === "All" || v.status === statusF) && (regionF === "All" || getRegion(v.id) === regionF)
+    (v) => (typeF === "All" || v.type === typeF) && (statusF === "All" || v.status === statusF)
   );
-
-  const filteredT = trips.filter((t) => {
-    if (!t.vehicleId) return typeF === "All" && statusF === "All" && regionF === "All";
-    return filteredV.some(v => v.id === t.vehicleId);
-  });
 
   const active = filteredV.filter((v) => v.status !== "Retired").length;
   const available = filteredV.filter((v) => v.status === "Available").length;
   const inShop = filteredV.filter((v) => v.status === "InShop").length;
   const onTrip = filteredV.filter((v) => v.status === "OnTrip").length;
   const retired = filteredV.filter((v) => v.status === "Retired").length;
-  const activeTrips = filteredT.filter((t) => t.status === "Dispatched").length;
-  const pendingTrips = filteredT.filter((t) => t.status === "Draft").length;
-  
-  const baseOnDuty = drivers.filter(d => d.status === "OnTrip");
-  const onDuty = (typeF === "All" && statusF === "All" && regionF === "All") 
-    ? baseOnDuty.length 
-    : baseOnDuty.filter(d => filteredT.some(t => t.driverId === d.id && t.status === "Dispatched")).length;
-    
+  const activeTrips = trips.filter((t) => t.status === "Dispatched").length;
+  const pendingTrips = trips.filter((t) => t.status === "Draft").length;
+  const onDuty = drivers.filter((d) => d.status === "OnTrip").length;
   const util = active ? Math.round((onTrip / active) * 100) : 0;
 
-  const recent = filteredT.slice(0, 6);
+  const recent = trips.slice(0, 6);
   const total = active + retired || 1;
 
   const bar = (label: string, count: number, color: string) => (
@@ -55,8 +43,6 @@ export default function Dashboard() {
     </div>
   );
 
-  const pad = (n: number | string) => typeof n === "number" ? n.toString().padStart(2, "0") : n;
-
   return (
     <div>
       <PageHeader title="Operations Dashboard" subtitle="Live view of your depot at a glance." />
@@ -65,7 +51,7 @@ export default function Dashboard() {
         {[
           { label: "Vehicle Type", value: typeF, set: setTypeF, opts: ["All", "Van", "Truck", "Mini"] },
           { label: "Status", value: statusF, set: setStatusF, opts: ["All", "Available", "OnTrip", "InShop", "Retired"] },
-          { label: "Region", value: regionF, set: setRegionF, opts: ["All", "North", "South"] },
+          { label: "Region", value: "All", set: () => {}, opts: ["All", "North", "South"] },
         ].map((f) => (
           <select key={f.label} value={f.value} onChange={(e) => f.set(e.target.value)}
             className="h-9 rounded-md border border-line bg-surface px-3 text-sm">
@@ -85,39 +71,41 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 bg-surface border border-line rounded-xl shadow-[var(--shadow-e1)]">
+        <div className="lg:col-span-2 bg-surface border border-line rounded-xl shadow-[var(--shadow-e1)] overflow-hidden">
           <div className="px-5 py-4 border-b border-line flex items-center justify-between">
             <h3 className="font-display font-semibold">Recent Trips</h3>
             <span className="text-xs text-slate">Last 6</span>
           </div>
-          <table className="w-full text-sm">
-            <thead className="bg-secondary/50">
-              <tr className="text-left label-caps">
-                <th className="px-5 py-2.5">Trip</th>
-                <th className="px-5 py-2.5">Vehicle</th>
-                <th className="px-5 py-2.5">Driver</th>
-                <th className="px-5 py-2.5">Status</th>
-                <th className="px-5 py-2.5 text-right">ETA</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recent.map((t) => {
-                const v = vehicles.find((x) => x.id === t.vehicleId);
-                const d = drivers.find((x) => x.id === t.driverId);
-                return (
-                  <tr key={t.id} className="border-t border-line hover:bg-secondary/30">
-                    <td className="px-5 py-3 font-mono text-xs">{t.id}</td>
-                    <td className="px-5 py-3 font-mono text-xs">{v?.regNo ?? "—"}</td>
-                    <td className="px-5 py-3">{d?.name ?? "—"}</td>
-                    <td className="px-5 py-3"><StatusPill status={t.status} /></td>
-                    <td className="px-5 py-3 text-right font-mono text-xs">
-                      {t.etaMinutes ? `${t.etaMinutes} min` : t.status === "Completed" ? "—" : "—"}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="overflow-hidden rounded-xl border border-line m-4 bg-surface">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50 shadow-[inset_0px_1px_2px_0px_rgba(255,255,255,1),inset_0px_-1px_4px_0px_rgba(0,0,0,0.05)] dark:shadow-[inset_0px_1px_2px_0px_rgba(255,255,255,0.1),inset_0px_-1px_2px_0px_rgba(0,0,0,0.02)]">
+                  <TableHead className="label-caps px-5 py-2.5 text-left font-semibold">Trip</TableHead>
+                  <TableHead className="label-caps px-5 py-2.5 text-left font-semibold">Vehicle</TableHead>
+                  <TableHead className="label-caps px-5 py-2.5 text-left font-semibold">Driver</TableHead>
+                  <TableHead className="label-caps px-5 py-2.5 text-left font-semibold">Status</TableHead>
+                  <TableHead className="label-caps px-5 py-2.5 text-right font-semibold">ETA</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {recent.map((t) => {
+                  const v = vehicles.find((x) => x.id === t.vehicleId);
+                  const d = drivers.find((x) => x.id === t.driverId);
+                  return (
+                    <TableRow key={t.id} className="hover:bg-secondary/30 border-t border-line">
+                      <TableCell className="px-5 py-3 font-mono text-xs">{t.id}</TableCell>
+                      <TableCell className="px-5 py-3 font-mono text-xs">{v?.regNo ?? "—"}</TableCell>
+                      <TableCell className="px-5 py-3">{d?.name ?? "—"}</TableCell>
+                      <TableCell className="px-5 py-3"><StatusPill status={t.status} /></TableCell>
+                      <TableCell className="px-5 py-3 text-right font-mono text-xs">
+                        {t.etaMinutes ? `${t.etaMinutes} min` : t.status === "Completed" ? "—" : "—"}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         </div>
 
         <div className="bg-surface border border-line rounded-xl shadow-[var(--shadow-e1)] p-5">

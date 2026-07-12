@@ -46,6 +46,7 @@ export interface Trip {
   cargoWeightKg: number;
   plannedDistanceKm: number;
   finalOdometerKm?: number;
+  actualDistanceKm?: number;
   fuelConsumedL?: number;
   status: TripStatus;
   etaMinutes?: number;

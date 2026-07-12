@@ -4,22 +4,30 @@ import { PageHeader } from "@/components/app-shell";
 import { StatusPill } from "@/components/status-pill";
 import { useAuth, useData } from "@/lib/store";
 import { can } from "@/lib/rbac";
-import { AlertTriangle, Plus, X } from "lucide-react";
+
+
+import { AlertTriangle, Plus, X, Download } from "lucide-react";
 import { toast } from "sonner";
+
 import type { Driver, DriverStatus } from "@/lib/types";
+import { downloadCSV } from "@/lib/csv";
 
-
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const isExpired = (iso: string) => new Date(iso) < new Date();
 const isExpiringSoon = (iso: string) => {
-  const diff = new Date(iso).getTime() - new Date().getTime();
-  return diff > 0 && diff <= 30 * 24 * 60 * 60 * 1000;
+  const expiry = new Date(iso);
+  const today = new Date();
+  const diffTime = expiry.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays > 0 && diffDays <= 30;
 };
 
 const getSafetyBadge = (score: number) => {
-  const tone = score >= 90 ? "success" : score >= 70 ? "warning" : "danger";
-  const sBg = tone === "success" ? "bg-[rgb(16_185_129_/_0.14)] text-[#047857]" : tone === "warning" ? "bg-[rgb(245_158_11_/_0.16)] text-[#B45309]" : "bg-[rgb(239_68_68_/_0.14)] text-[#B91C1C]";
-  return <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${sBg}`}>{score}%</span>;
+  if (score >= 90) return <span className="rounded bg-success/10 text-success px-2 py-0.5 text-xs font-semibold">Excellent</span>;
+  if (score >= 80) return <span className="rounded bg-info/10 text-info px-2 py-0.5 text-xs font-semibold">Good</span>;
+  if (score >= 70) return <span className="rounded bg-amber-500/10 text-amber-600 px-2 py-0.5 text-xs font-semibold">Fair</span>;
+  return <span className="rounded bg-danger/10 text-danger px-2 py-0.5 text-xs font-semibold">Poor</span>;
 };
 
 export default function DriversPage() {
@@ -32,57 +40,82 @@ export default function DriversPage() {
 
   if (noAccess) return <div className="text-slate">Your role has no access to Drivers.</div>;
 
+  const handleExportCSV = () => {
+    downloadCSV(
+      drivers,
+      [
+        { key: "name", label: "Name" },
+        { key: "licenseNo", label: "License No." },
+        { key: "category", label: "Category" },
+        { key: "licenseExpiry", label: "License Expiry" },
+        { key: "contact", label: "Contact" },
+        { key: "tripCompletionPct", label: "Trip Completion %" },
+        { key: "safetyScore", label: "Safety Score" },
+        { key: "status", label: "Status" },
+      ],
+      "drivers_list"
+    );
+  };
+
   return (
     <div>
       <PageHeader
         title="Drivers & Safety Profiles"
         subtitle="License compliance, safety scores, and duty status."
-        actions={!readOnly && (
-          <button onClick={() => setOpen(true)}
-            className="inline-flex items-center gap-2 h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium">
-            <Plus className="h-4 w-4" /> Add Driver
-          </button>
-        )}
+        actions={
+          <div className="flex items-center gap-2">
+            <button onClick={handleExportCSV}
+              className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-line text-sm hover:bg-secondary/50 transition">
+              <Download className="h-4 w-4" /> Export CSV
+            </button>
+            {!readOnly && (
+              <button onClick={() => setOpen(true)}
+                className="inline-flex items-center gap-2 h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-95 transition">
+                <Plus className="h-4 w-4" /> Add Driver
+              </button>
+            )}
+          </div>
+        }
       />
 
-      <div className="bg-surface border border-line rounded-xl shadow-[var(--shadow-e1)] overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-secondary/50">
-            <tr className="text-left label-caps">
-              <th className="px-4 py-2.5">Driver</th>
-              <th className="px-4 py-2.5">License No.</th>
-              <th className="px-4 py-2.5">Cat.</th>
-              <th className="px-4 py-2.5">Expiry</th>
-              <th className="px-4 py-2.5">Contact</th>
-              <th className="px-4 py-2.5 text-right">Trip Compl.</th>
-              <th className="px-4 py-2.5">Safety</th>
-              <th className="px-4 py-2.5">Status</th>
-            </tr>
-          </thead>
-          <tbody>
+      <div className="overflow-hidden rounded-xl border border-line bg-surface">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/50 shadow-[inset_0px_1px_2px_0px_rgba(255,255,255,1),inset_0px_-1px_4px_0px_rgba(0,0,0,0.05)] dark:shadow-[inset_0px_1px_2px_0px_rgba(255,255,255,0.1),inset_0px_-1px_2px_0px_rgba(0,0,0,0.02)]">
+              <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Driver</TableHead>
+              <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">License No.</TableHead>
+              <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Cat.</TableHead>
+              <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Expiry</TableHead>
+              <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Contact</TableHead>
+              <TableHead className="label-caps px-4 py-2.5 text-right font-semibold">Trip Compl.</TableHead>
+              <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Safety</TableHead>
+              <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {drivers.map((d) => {
               const expired = isExpired(d.licenseExpiry);
               const expiringSoon = isExpiringSoon(d.licenseExpiry);
               return (
-                <tr key={d.id} onClick={() => setSelected(d.id)}
-                  className={`border-t border-line cursor-pointer hover:bg-secondary/30 ${selectedId === d.id ? "bg-primary/5" : ""}`}>
-                  <td className="px-4 py-3 font-medium">{d.name}</td>
-                  <td className="px-4 py-3 font-mono text-xs">{d.licenseNo}</td>
-                  <td className="px-4 py-3 text-slate">{d.category}</td>
-                  <td className={`px-4 py-3 font-mono text-xs ${expired ? "text-danger font-semibold" : expiringSoon ? "text-amber-600 font-semibold" : ""}`}>
+                <TableRow key={d.id} onClick={() => setSelected(d.id)}
+                  className={`cursor-pointer hover:bg-secondary/30 border-t border-line ${selectedId === d.id ? "bg-primary/5" : ""}`}>
+                  <TableCell className="px-4 py-3 font-medium">{d.name}</TableCell>
+                  <TableCell className="px-4 py-3 font-mono text-xs">{d.licenseNo}</TableCell>
+                  <TableCell className="px-4 py-3 text-slate">{d.category}</TableCell>
+                  <TableCell className={`px-4 py-3 font-mono text-xs ${expired ? "text-danger font-semibold" : expiringSoon ? "text-amber-600 font-semibold" : ""}`}>
                     {d.licenseExpiry}
                     {expired && <span className="ml-2 rounded bg-danger/10 text-danger px-1.5 py-0.5 text-[10px]">EXPIRED</span>}
                     {expiringSoon && <span className="ml-2 cursor-help" title="Expiring within 30 days">⚠️</span>}
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs">{d.contact.slice(0, 5)}xxxxx</td>
-                  <td className="px-4 py-3 text-right font-mono text-xs">{d.tripCompletionPct}%</td>
-                  <td className="px-4 py-3">{getSafetyBadge(d.safetyScore)}</td>
-                  <td className="px-4 py-3"><StatusPill status={d.status} /></td>
-                </tr>
+                  </TableCell>
+                  <TableCell className="px-4 py-3 font-mono text-xs">{d.contact.slice(0, 5)}xxxxx</TableCell>
+                  <TableCell className="px-4 py-3 text-right font-mono text-xs">{d.tripCompletionPct}%</TableCell>
+                  <TableCell className="px-4 py-3">{getSafetyBadge(d.safetyScore)}</TableCell>
+                  <TableCell className="px-4 py-3"><StatusPill status={d.status} /></TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {!readOnly && selectedId && (
