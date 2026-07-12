@@ -40,6 +40,12 @@ export function AppShell({ children }: { children: ReactNode }) {
     return diffDays <= 30; // Expired or expiring within 30 days
   });
 
+  const loadData = useData((s) => s.loadData);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
   useEffect(() => {
     if (isDark) {
       document.documentElement.classList.add("dark");

@@ -219,12 +219,18 @@ export default function ExpensesPage() {
 
       {fuelOpen && (
         <Modal title="Log Fuel" onClose={() => setFuelOpen(false)}>
-          <FuelForm vehicles={vehicles} onSubmit={(f) => { addFuel(f); setFuelOpen(false); }} />
+          <FuelForm vehicles={vehicles} onSubmit={async (f) => { 
+            const res = await addFuel(f); 
+            if (res.ok) setFuelOpen(false); 
+          }} />
         </Modal>
       )}
       {expOpen && (
         <Modal title="Add Expense" onClose={() => setExpOpen(false)}>
-          <ExpenseForm vehicles={vehicles} onSubmit={(e) => { addExpense(e); setExpOpen(false); }} />
+          <ExpenseForm vehicles={vehicles} onSubmit={async (e) => { 
+            const res = await addExpense(e); 
+            if (res.ok) setExpOpen(false); 
+          }} />
         </Modal>
       )}
     </div>

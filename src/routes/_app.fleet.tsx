@@ -152,7 +152,7 @@ function AddVehicleModal({
   onClose, onSubmit, onDocAttach
 }: { 
   onClose: () => void; 
-  onSubmit: (v: Omit<Vehicle, "id">) => { ok: boolean; error?: string };
+  onSubmit: (v: Omit<Vehicle, "id">) => Promise<{ ok: boolean; error?: string }>;
   onDocAttach: (name: string) => void;
 }) {
   const [form, setForm] = useState<Omit<Vehicle, "id">>({
@@ -169,9 +169,9 @@ function AddVehicleModal({
           <button onClick={onClose}><X className="h-4 w-4 text-slate" /></button>
         </div>
         <form
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            const r = onSubmit(form);
+            const r = await onSubmit(form);
             if (r.ok) {
               if (docFile) onDocAttach(docFile.name);
               onClose();

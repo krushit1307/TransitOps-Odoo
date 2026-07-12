@@ -97,7 +97,11 @@ export default function MaintenancePage() {
                 <option value="Completed">Completed</option>
               </select>
             </div>
-            <button disabled={readOnly} onClick={() => { addMaintenance(form); setForm({ ...form, cost: 0 }); }}
+            <button disabled={readOnly} onClick={async () => { 
+              const res = await addMaintenance(form); 
+              if (res.ok) setForm({ ...form, cost: 0 }); 
+              else toast.error(res.error);
+            }}
               className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40 hover:brightness-95 transition">
               Save Record
             </button>
@@ -149,7 +153,10 @@ export default function MaintenancePage() {
                       <TableCell className="px-4 py-3"><StatusPill status={m.status} /></TableCell>
                       <TableCell className="px-4 py-3 text-right">
                         {!readOnly && m.status === "InShop" && (
-                          <button onClick={() => closeMaintenance(m.id)}
+                          <button onClick={async () => {
+                              const res = await closeMaintenance(m.id);
+                              if (!res.ok) toast.error(res.error);
+                            }}
                             className="text-[11px] px-2 py-1 rounded border border-success/40 text-success hover:bg-success/10 transition">
                             Close
                           </button>
