@@ -4,10 +4,9 @@ import { PageHeader } from "@/components/app-shell";
 import { StatusPill } from "@/components/status-pill";
 import { useAuth, useData } from "@/lib/store";
 import { can } from "@/lib/rbac";
-import { Plus, AlertTriangle, X } from "lucide-react";
+import { Plus, AlertTriangle, X, Download } from "lucide-react";
 import type { Vehicle } from "@/lib/types";
-
-
+import { downloadCSV } from "@/lib/csv";
 
 export default function FleetPage() {
   const user = useAuth((s) => s.user);
@@ -30,18 +29,40 @@ export default function FleetPage() {
     [vehicles, typeF, statusF, search]
   );
 
+  const handleExportCSV = () => {
+    downloadCSV(
+      rows,
+      [
+        { key: "regNo", label: "Registration No." },
+        { key: "nameModel", label: "Name / Model" },
+        { key: "type", label: "Type" },
+        { key: "maxCapacityKg", label: "Capacity (kg)" },
+        { key: "odometerKm", label: "Odometer (km)" },
+        { key: "acquisitionCost", label: "Acquisition Cost (INR)" },
+        { key: "status", label: "Status" },
+      ],
+      "fleet_registry"
+    );
+  };
+
   return (
     <div>
       <PageHeader
         title="Vehicle Registry"
         subtitle="Every vehicle in the depot, with capacity, cost and current status."
         actions={
-          !readOnly && (
-            <button onClick={() => setOpen(true)}
-              className="inline-flex items-center gap-2 h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-95">
-              <Plus className="h-4 w-4" /> Add Vehicle
+          <div className="flex items-center gap-2">
+            <button onClick={handleExportCSV}
+              className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-line text-sm hover:bg-secondary/50 transition">
+              <Download className="h-4 w-4" /> Export CSV
             </button>
-          )
+            {!readOnly && (
+              <button onClick={() => setOpen(true)}
+                className="inline-flex items-center gap-2 h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-95 transition">
+                <Plus className="h-4 w-4" /> Add Vehicle
+              </button>
+            )}
+          </div>
         }
       />
 
