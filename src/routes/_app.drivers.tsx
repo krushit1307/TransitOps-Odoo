@@ -5,11 +5,22 @@ import { StatusPill } from "@/components/status-pill";
 import { useAuth, useData } from "@/lib/store";
 import { can } from "@/lib/rbac";
 import { AlertTriangle, Plus, X } from "lucide-react";
+import { toast } from "sonner";
 import type { Driver, DriverStatus } from "@/lib/types";
 
 
 
 const isExpired = (iso: string) => new Date(iso) < new Date();
+const isExpiringSoon = (iso: string) => {
+  const diff = new Date(iso).getTime() - new Date().getTime();
+  return diff > 0 && diff <= 30 * 24 * 60 * 60 * 1000;
+};
+
+const getSafetyBadge = (score: number) => {
+  const tone = score >= 90 ? "success" : score >= 70 ? "warning" : "danger";
+  const sBg = tone === "success" ? "bg-[rgb(16_185_129_/_0.14)] text-[#047857]" : tone === "warning" ? "bg-[rgb(245_158_11_/_0.16)] text-[#B45309]" : "bg-[rgb(239_68_68_/_0.14)] text-[#B91C1C]";
+  return <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${sBg}`}>{score}%</span>;
+};
 
 export default function DriversPage() {
   const user = useAuth((s) => s.user);
@@ -51,18 +62,21 @@ export default function DriversPage() {
           <tbody>
             {drivers.map((d) => {
               const expired = isExpired(d.licenseExpiry);
+              const expiringSoon = isExpiringSoon(d.licenseExpiry);
               return (
                 <tr key={d.id} onClick={() => setSelected(d.id)}
                   className={`border-t border-line cursor-pointer hover:bg-secondary/30 ${selectedId === d.id ? "bg-primary/5" : ""}`}>
                   <td className="px-4 py-3 font-medium">{d.name}</td>
                   <td className="px-4 py-3 font-mono text-xs">{d.licenseNo}</td>
                   <td className="px-4 py-3 text-slate">{d.category}</td>
-                  <td className={`px-4 py-3 font-mono text-xs ${expired ? "text-danger font-semibold" : ""}`}>
-                    {d.licenseExpiry}{expired && <span className="ml-2 rounded bg-danger/10 text-danger px-1.5 py-0.5 text-[10px]">EXPIRED</span>}
+                  <td className={`px-4 py-3 font-mono text-xs ${expired ? "text-danger font-semibold" : expiringSoon ? "text-amber-600 font-semibold" : ""}`}>
+                    {d.licenseExpiry}
+                    {expired && <span className="ml-2 rounded bg-danger/10 text-danger px-1.5 py-0.5 text-[10px]">EXPIRED</span>}
+                    {expiringSoon && <span className="ml-2 cursor-help" title="Expiring within 30 days">⚠️</span>}
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs">{d.contact}</td>
+                  <td className="px-4 py-3 font-mono text-xs">{d.contact.slice(0, 5)}xxxxx</td>
                   <td className="px-4 py-3 text-right font-mono text-xs">{d.tripCompletionPct}%</td>
-                  <td className="px-4 py-3"><StatusPill status={d.safetyScore === "Excellent" || d.safetyScore === "Good" ? "Available" : d.safetyScore === "Fair" ? "Pending" : "Suspended"} /></td>
+                  <td className="px-4 py-3">{getSafetyBadge(d.safetyScore)}</td>
                   <td className="px-4 py-3"><StatusPill status={d.status} /></td>
                 </tr>
               );
@@ -75,8 +89,14 @@ export default function DriversPage() {
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <span className="label-caps">Toggle status for {drivers.find((x) => x.id === selectedId)?.name}:</span>
           {(["Available", "OnTrip", "OffDuty", "Suspended"] as DriverStatus[]).map((s) => (
-            <button key={s} onClick={() => updateDriverStatus(selectedId, s)}
-              className="text-xs">
+            <button key={s} onClick={() => {
+              const driver = drivers.find((x) => x.id === selectedId);
+              if (driver?.status === "OnTrip" && (s === "OffDuty" || s === "Suspended")) {
+                toast.error("Cannot change status of a driver currently on a trip");
+                return;
+              }
+              updateDriverStatus(selectedId, s);
+            }} className="text-xs">
               <StatusPill status={s} className="cursor-pointer hover:opacity-80" />
             </button>
           ))}
@@ -96,7 +116,7 @@ export default function DriversPage() {
 function AddDriverModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (d: Omit<Driver, "id">) => void }) {
   const [form, setForm] = useState<Omit<Driver, "id">>({
     name: "", licenseNo: "", category: "LMV", licenseExpiry: "2027-12-31",
-    contact: "9xxxx-xxxxx", tripCompletionPct: 0, safetyScore: "Good", status: "Available",
+    contact: "9876543210", tripCompletionPct: 0, safetyScore: 90, status: "Available",
   });
 
   return (
