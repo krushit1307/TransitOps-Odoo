@@ -61,7 +61,7 @@ interface DataState {
   completeTrip: (id: string, finalOdo: number, fuelL: number, fuelCost: number) => void;
   cancelTrip: (id: string, reason: string) => void;
 
-  addMaintenance: (m: Omit<MaintenanceLog, "id">) => void;
+  addMaintenance: (m: Omit<MaintenanceLog, "id">) => { ok: boolean; error?: string };
   closeMaintenance: (id: string) => void;
 
   addFuel: (f: Omit<FuelLog, "id">) => void;
@@ -168,19 +168,24 @@ export const useData = create<DataState>()((set, get) => ({
   },
 
   addMaintenance: (m) => {
+    const v = get().vehicles.find((x) => x.id === m.vehicleId);
+    if (v && v.status === "OnTrip") return { ok: false, error: "Cannot add maintenance for a vehicle currently OnTrip" };
     set((s) => ({ maintenance: [{ ...m, id: nid("m") }, ...s.maintenance] }));
     if (m.status === "InShop") get().updateVehicleStatus(m.vehicleId, "InShop");
     else if (m.status === "Completed") {
-      const v = get().vehicles.find((x) => x.id === m.vehicleId);
       if (v && v.status !== "Retired") get().updateVehicleStatus(m.vehicleId, "Available");
     }
+    return { ok: true };
   },
   closeMaintenance: (id) => {
     const m = get().maintenance.find((x) => x.id === id);
     if (!m) return;
     set((s) => ({ maintenance: s.maintenance.map((x) => (x.id === id ? { ...x, status: "Completed" } : x)) }));
-    const v = get().vehicles.find((x) => x.id === m.vehicleId);
-    if (v && v.status !== "Retired") get().updateVehicleStatus(m.vehicleId, "Available");
+    const anyInShop = get().maintenance.some((x) => x.vehicleId === m.vehicleId && x.status === "InShop");
+    if (!anyInShop) {
+      const v = get().vehicles.find((x) => x.id === m.vehicleId);
+      if (v && v.status !== "Retired") get().updateVehicleStatus(m.vehicleId, "Available");
+    }
   },
 
   addFuel: (f) => set((s) => ({ fuel: [{ ...f, id: nid("f") }, ...s.fuel] })),

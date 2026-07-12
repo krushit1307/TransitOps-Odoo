@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { StatusPill } from "@/components/status-pill";
@@ -32,7 +31,7 @@ export default function MaintenancePage() {
         {
           key: "vehicleId",
           label: "Vehicle Registration",
-          transform: (vId) => {
+          transform: (vId: string) => {
             const v = vehicles.find((x) => x.id === vId);
             return v ? v.regNo : "Unknown";
           },
