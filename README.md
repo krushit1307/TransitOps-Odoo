@@ -1,4 +1,42 @@
-# TransitOps — Smart Transport Operations Platform
+<div align="center">
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:6D28D9,50:7C3AED,100:06B6D4&height=220&section=header&text=TransitOps&fontSize=68&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=Smart%20Transport%20Operations%20Platform&descAlignY=58&descSize=20" width="100%" alt="TransitOps animated banner" />
+
+<br/>
+
+[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=3200&pause=900&color=7C3AED&center=true&vCenter=true&multiline=true&repeat=true&width=780&height=80&lines=One+console+for+fleet%2C+dispatch+%26+depot.;RBAC+%C2%B7+Live+KPIs+%C2%B7+Auto+status+transitions.;Built+for+Odoo+Hackathon+in+8+Hours.)](https://transitops-odoo.vercel.app/)
+
+<br/>
+
+<a href="https://transitops-odoo.vercel.app/">
+  <img src="https://img.shields.io/badge/%F0%9F%9A%80_Live_Demo-transitops--odoo.vercel.app-6D28D9?style=for-the-badge&labelColor=0f172a" alt="Live Demo"/>
+</a>
+&nbsp;
+<a href="https://link.excalidraw.com/l/65VNwvy7c4X/1FHGDNgD2td">
+  <img src="https://img.shields.io/badge/%F0%9F%96%8A%EF%B8%8F_Mockup-Excalidraw-06B6D4?style=for-the-badge&labelColor=0f172a" alt="Mockup"/>
+</a>
+
+<br/><br/>
+
+<img src="https://img.shields.io/badge/Odoo_Hackathon-8_Hours-FF6B35?style=flat-square&logo=odoo&logoColor=white" alt="Hackathon"/>
+<img src="https://img.shields.io/badge/Status-Production_Demo-22C55E?style=flat-square" alt="Status"/>
+<img src="https://img.shields.io/badge/RBAC-4_Roles-7C3AED?style=flat-square" alt="RBAC"/>
+<img src="https://img.shields.io/badge/DB-PostgreSQL_%2B_Prisma-336791?style=flat-square&logo=postgresql&logoColor=white" alt="Database"/>
+<img src="https://img.shields.io/badge/Frontend-React_19_%2B_Vite-61DAFB?style=flat-square&logo=react&logoColor=black" alt="Frontend"/>
+<img src="https://img.shields.io/badge/API-Express_5-000000?style=flat-square&logo=express&logoColor=white" alt="API"/>
+<img src="https://img.shields.io/badge/Deployed-Vercel-black?style=flat-square&logo=vercel&logoColor=white" alt="Vercel"/>
+
+<br/><br/>
+
+```text
+🚛  FLEET  →  🧑‍✈️ DRIVERS  →  🗺️ DISPATCH  →  🔧 SHOP  →  ⛽ FUEL  →  📊 ROI
+         ╲________________________________________________________╱
+                    TransitOps Control Tower · Live Rules Engine
+```
+
+</div>
+
+---
 
 > **Odoo Hackathon Project** · End-to-end fleet, dispatch, maintenance & expense control tower  
 > **Live Demo:** [https://transitops-odoo.vercel.app/](https://transitops-odoo.vercel.app/)  
@@ -8,58 +46,62 @@ TransitOps digitizes the complete lifecycle of transport operations—vehicle re
 
 Many logistics companies still rely on manual logbooks. That leads to scheduling conflicts, underutilized vehicles, missed maintenance, expired licenses, inaccurate expense tracking, and zero operational visibility. TransitOps replaces that chaos with a centralized, role-aware Control Tower.
 
+<div align="center">
+
+### ⚡ Snapshot
+
+| 🚚 Fleet | 🧭 Dispatch | 🛡️ Compliance | 💰 Finance |
+|:---:|:---:|:---:|:---:|
+| Unique vehicle registry | Draft → Dispatched → Done | License & safety scores | Fuel + Maint + ROI |
+| Capacity & odometer | Auto OnTrip status | Suspended drivers blocked | CSV / PDF exports |
+| Docs & In-Shop pool | Live board + ETA | 30-day expiry alerts | Recharts analytics |
+
+</div>
+
 ---
 
-## Table of Contents
+## 📑 Table of Contents
 
-1. [Overview](#1-overview)
-2. [Problem Statement](#2-problem-statement)
-3. [Hackathon Brief & Objectives](#3-hackathon-brief--objectives)
-4. [Target Users & Personas](#4-target-users--personas)
-5. [Live Demo & Quick Links](#5-live-demo--quick-links)
-6. [Feature Highlights](#6-feature-highlights)
-7. [Mandatory Deliverables Checklist](#7-mandatory-deliverables-checklist)
-8. [Bonus Features Implemented](#8-bonus-features-implemented)
-9. [Technology Stack](#9-technology-stack)
-10. [System Architecture](#10-system-architecture)
-11. [Repository Structure](#11-repository-structure)
-12. [Database Design](#12-database-design)
-13. [Database Screenshots (pgAdmin)](#13-database-screenshots-pgadmin)
-14. [Authentication & Security](#14-authentication--security)
-15. [Role-Based Access Control (RBAC)](#15-role-based-access-control-rbac)
-16. [Application Modules](#16-application-modules)
-    - [16.1 Login](#161-login)
-    - [16.2 Operations Dashboard](#162-operations-dashboard)
-    - [16.3 Vehicle Registry (Fleet)](#163-vehicle-registry-fleet)
-    - [16.4 Driver Management](#164-driver-management)
-    - [16.5 Trip Management](#165-trip-management)
-    - [16.6 Maintenance Workflow](#166-maintenance-workflow)
-    - [16.7 Fuel & Expense Management](#167-fuel--expense-management)
-    - [16.8 Reports & Analytics](#168-reports--analytics)
-    - [16.9 Settings & Live RBAC Matrix](#169-settings--live-rbac-matrix)
-17. [Mandatory Business Rules](#17-mandatory-business-rules)
-18. [Automatic Status Transitions](#18-automatic-status-transitions)
-19. [End-to-End Example Workflow (9 Steps)](#19-end-to-end-example-workflow-9-steps)
-20. [Negative Path Demonstrations](#20-negative-path-demonstrations)
-21. [API Reference](#21-api-reference)
-22. [Frontend State & Data Flow](#22-frontend-state--data-flow)
-23. [Analytics Formulas](#23-analytics-formulas)
-24. [Exports (CSV & PDF)](#24-exports-csv--pdf)
-25. [UI / UX Design System](#25-ui--ux-design-system)
-26. [Seed Data & Demo Credentials](#26-seed-data--demo-credentials)
-27. [Local Setup & Development](#27-local-setup--development)
-28. [Environment Variables](#28-environment-variables)
-29. [Deployment (Vercel)](#29-deployment-vercel)
-30. [Judge Walkthrough Script (5 Minutes)](#30-judge-walkthrough-script-5-minutes)
-31. [Testing Scenarios](#31-testing-scenarios)
-32. [Project Timeline (8-Hour Hackathon)](#32-project-timeline-8-hour-hackathon)
-33. [Future Enhancements](#33-future-enhancements)
-34. [Team & Acknowledgements](#34-team--acknowledgements)
-35. [License](#35-license)
+<details open>
+<summary><b>Click to expand / collapse navigation</b></summary>
+
+<br/>
+
+| # | Section | # | Section |
+|---:|---|---:|---|
+| 01 | [Overview](#1-overview) | 19 | [Example Workflow (9 Steps)](#19-end-to-end-example-workflow-9-steps) |
+| 02 | [Problem Statement](#2-problem-statement) | 20 | [Negative Paths](#20-negative-path-demonstrations) |
+| 03 | [Hackathon Brief](#3-hackathon-brief--objectives) | 21 | [API Reference](#21-api-reference) |
+| 04 | [Target Users](#4-target-users--personas) | 22 | [Frontend State Flow](#22-frontend-state--data-flow) |
+| 05 | [Live Demo Links](#5-live-demo--quick-links) | 23 | [Analytics Formulas](#23-analytics-formulas) |
+| 06 | [Feature Highlights](#6-feature-highlights) | 24 | [CSV & PDF Exports](#24-exports-csv--pdf) |
+| 07 | [Mandatory Deliverables](#7-mandatory-deliverables-checklist) | 25 | [UI / UX Design System](#25-ui--ux-design-system) |
+| 08 | [Bonus Features](#8-bonus-features-implemented) | 26 | [Seed Data & Credentials](#26-seed-data--demo-credentials) |
+| 09 | [Technology Stack](#9-technology-stack) | 27 | [Local Setup](#27-local-setup--development) |
+| 10 | [System Architecture](#10-system-architecture) | 28 | [Environment Variables](#28-environment-variables) |
+| 11 | [Repository Structure](#11-repository-structure) | 29 | [Deployment (Vercel)](#29-deployment-vercel) |
+| 12 | [Database Design](#12-database-design) | 30 | [Judge Walkthrough](#30-judge-walkthrough-script-5-minutes) |
+| 13 | [Database Screenshots](#13-database-screenshots-pgadmin) | 31 | [Testing Scenarios](#31-testing-scenarios) |
+| 14 | [Authentication](#14-authentication--security) | 32 | [8-Hour Timeline](#32-project-timeline-8-hour-hackathon) |
+| 15 | [RBAC Matrix](#15-role-based-access-control-rbac) | 33 | [Future Enhancements](#33-future-enhancements) |
+| 16 | [Application Modules](#16-application-modules) | 34 | [Acknowledgements](#34-team--acknowledgements) |
+| 17 | [Business Rules](#17-mandatory-business-rules) | 35 | [License](#35-license) |
+| 18 | [Status Transitions](#18-automatic-status-transitions) | · | · |
+
+**Modules deep-dive:** [Login](#161-login) · [Dashboard](#162-operations-dashboard) · [Fleet](#163-vehicle-registry-fleet) · [Drivers](#164-driver-management) · [Trips](#165-trip-management) · [Maintenance](#166-maintenance-workflow) · [Expenses](#167-fuel--expense-management) · [Analytics](#168-reports--analytics) · [Settings](#169-settings--live-rbac-matrix)
+
+</details>
 
 ---
 
 ## 1. Overview
+
+<div align="center">
+<img src="https://img.shields.io/badge/Control_Tower-Full_Stack-6D28D9?style=for-the-badge" alt="Control Tower"/>
+<img src="https://img.shields.io/badge/Business_Rules-Enforced_in_API-06B6D4?style=for-the-badge" alt="Rules"/>
+</div>
+
+<br/>
 
 **TransitOps** (also branded in-app as **TransitOps Control Tower**) is a full-stack web application built for the Odoo Hackathon. It provides a single operational console where depot staff can:
 
@@ -78,6 +120,15 @@ The platform is production-shaped: PostgreSQL via Prisma, Express REST API, Reac
 ---
 
 ## 2. Problem Statement
+
+<div align="center">
+
+```diff
+- Spreadsheets · Paper logbooks · WhatsApp dispatch · Blind finance
++ TransitOps Control Tower · Validated dispatch · Live KPIs · ROI
+```
+
+</div>
 
 Logistics SMEs commonly manage operations with:
 
@@ -140,6 +191,14 @@ Each persona sees a **filtered sidebar**: modules with `none` access are hidden;
 
 ## 5. Live Demo & Quick Links
 
+<div align="center">
+
+[![Open Live Demo](https://img.shields.io/badge/▶_OPEN_LIVE_DEMO-https%3A%2F%2Ftransitops--odoo.vercel.app-6D28D9?style=for-the-badge&logo=vercel&logoColor=white)](https://transitops-odoo.vercel.app/)
+
+<img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&size=16&duration=2500&pause=1200&color=06B6D4&center=true&vCenter=true&width=640&lines=Judge+path%3A+Dispatcher+%E2%86%92+Dashboard+%E2%86%92+Trips+%E2%86%92+Finance+Analytics;Switch+roles+to+see+RBAC+VIEW+%2F+FULL+%2F+NONE+in+action" alt="Judge path typing"/>
+
+</div>
+
 | Resource | Link |
 |---|---|
 | **Production app** | [https://transitops-odoo.vercel.app/](https://transitops-odoo.vercel.app/) |
@@ -153,31 +212,43 @@ Each persona sees a **filtered sidebar**: modules with `none` access are hidden;
 
 ## 6. Feature Highlights
 
+<div align="center">
+
+| 🔐 Auth + RBAC | 📡 Live KPIs | 🔄 Auto Transitions | 📈 ROI Charts |
+|:---:|:---:|:---:|:---:|
+| 4 roles · lockout | 7 dashboard cards | Trip / Shop / Duty | Recharts + CSV/PDF |
+
+</div>
+
 ### Core (mandatory)
 
-- Secure email/password login with role selection  
-- Role-Based Access Control across Fleet, Drivers, Trips, Expenses, Analytics  
-- Operations Dashboard with 7 KPIs + vehicle-type / status / region filters  
-- Full CRUD-style Vehicle Registry (unique `regNo`)  
-- Driver profiles with license category, expiry, safety score, status  
-- Trip lifecycle: **Draft → Dispatched → Completed / Cancelled**  
-- Capacity, availability, and license validations on dispatch  
-- Automatic vehicle/driver status transitions  
-- Maintenance logs that force **In Shop** and hide vehicles from dispatch  
-- Fuel logs + trip-linked expenses with auto total operational cost  
-- Analytics: efficiency, utilization, op cost, ROI + charts  
-- CSV export across modules  
+| # | Feature | Status |
+|---:|---|:---:|
+| 01 | Secure email/password login with role selection | ✅ |
+| 02 | Role-Based Access Control across Fleet, Drivers, Trips, Expenses, Analytics | ✅ |
+| 03 | Operations Dashboard with 7 KPIs + vehicle-type / status / region filters | ✅ |
+| 04 | Full CRUD-style Vehicle Registry (unique `regNo`) | ✅ |
+| 05 | Driver profiles with license category, expiry, safety score, status | ✅ |
+| 06 | Trip lifecycle: **Draft → Dispatched → Completed / Cancelled** | ✅ |
+| 07 | Capacity, availability, and license validations on dispatch | ✅ |
+| 08 | Automatic vehicle/driver status transitions | ✅ |
+| 09 | Maintenance logs that force **In Shop** and hide vehicles from dispatch | ✅ |
+| 10 | Fuel logs + trip-linked expenses with auto total operational cost | ✅ |
+| 11 | Analytics: efficiency, utilization, op cost, ROI + charts | ✅ |
+| 12 | CSV export across modules | ✅ |
 
 ### Bonus / polish
 
-- **PDF export** (jsPDF + autotable) for fuel & expenses  
-- **Dark mode** (persisted in `localStorage`)  
-- **License expiry alerts** (bell + 30-day window)  
-- **Vehicle document attachment** UI (paperclip / docs column)  
-- Search, filters, and sorting on registry / trips / drivers  
-- Account lockout after **5 failed login attempts**  
-- Live editable RBAC matrix in Settings  
-- Responsive Control Tower shell (sidebar + glass topbar)  
+| # | Feature | Status |
+|---:|---|:---:|
+| B1 | **PDF export** (jsPDF + autotable) for fuel & expenses | ✅ |
+| B2 | **Dark mode** (persisted in `localStorage`) | ✅ |
+| B3 | **License expiry alerts** (bell + 30-day window) | ✅ |
+| B4 | **Vehicle document attachment** UI (paperclip / docs column) | ✅ |
+| B5 | Search, filters, and sorting on registry / trips / drivers | ✅ |
+| B6 | Account lockout after **5 failed login attempts** | ✅ |
+| B7 | Live editable RBAC matrix in Settings | ✅ |
+| B8 | Responsive Control Tower shell (sidebar + glass topbar) | ✅ |
 
 ---
 
@@ -210,6 +281,26 @@ Each persona sees a **filtered sidebar**: modules with `none` access are hidden;
 ---
 
 ## 9. Technology Stack
+
+<div align="center">
+
+### Built with
+
+<p>
+  <img src="https://skillicons.dev/icons?i=react,ts,vite,tailwind,nodejs,express,postgres,prisma,vercel&theme=dark" alt="Tech skill icons"/>
+</p>
+
+<img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React"/>
+<img src="https://img.shields.io/badge/TypeScript-5.8-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TS"/>
+<img src="https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite"/>
+<img src="https://img.shields.io/badge/Tailwind-4-38BDF8?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind"/>
+<img src="https://img.shields.io/badge/Express-5-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express"/>
+<img src="https://img.shields.io/badge/Prisma-6-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma"/>
+<img src="https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white" alt="Postgres"/>
+<img src="https://img.shields.io/badge/Zustand-State-4338CA?style=for-the-badge" alt="Zustand"/>
+<img src="https://img.shields.io/badge/Recharts-Analytics-FF7300?style=for-the-badge" alt="Recharts"/>
+
+</div>
 
 ### Frontend
 
@@ -257,6 +348,12 @@ Each persona sees a **filtered sidebar**: modules with `none` access are hidden;
 ---
 
 ## 10. System Architecture
+
+<div align="center">
+<img src="https://img.shields.io/badge/Layered-Client_%E2%86%92_API_%E2%86%92_Postgres-6D28D9?style=for-the-badge" alt="Architecture layers"/>
+</div>
+
+<br/>
 
 ### High-level diagram
 
@@ -478,32 +575,46 @@ total = toll + other + maintenanceLinkedCost
 
 ## 13. Database Screenshots (pgAdmin)
 
+<div align="center">
+
+<img src="https://img.shields.io/badge/DB-transitops01-336791?style=for-the-badge&logo=postgresql&logoColor=white" alt="DB name"/>
+<img src="https://img.shields.io/badge/Schema-public-6D28D9?style=for-the-badge" alt="Schema"/>
+<img src="https://img.shields.io/badge/Tables-7_Core_Entities-06B6D4?style=for-the-badge" alt="Tables"/>
+
+</div>
+
+<br/>
+
 The following screenshots were captured from **pgAdmin** against the PostgreSQL database **`transitops01`** (`public` schema). They prove that the Prisma models are materialized as real relational tables with live seed / operational data.
 
-### Vehicle table
+### 🚚 Vehicle table
 
 Master fleet registry: registration numbers, capacity, odometer, acquisition cost, and `VehicleStatus` enum values (`Available`, `OnTrip`, `InShop`, `Retired`).
 
-![Vehicle table in pgAdmin](./public/vehicle_db.png)
+<p align="center">
+  <img src="./public/vehicle_db.png" alt="Vehicle table in pgAdmin" width="100%"/>
+</p>
 
-### Trip table
+### 🗺️ Trip table
 
 Trip lifecycle rows with cargo weight, distances, fuel consumed, ETA, and statuses across `Draft` / `Dispatched` / `Completed` / `Cancelled`.
 
-![Trip table in pgAdmin](./public/trip_db.png)
+<p align="center">
+  <img src="./public/trip_db.png" alt="Trip table in pgAdmin" width="100%"/>
+</p>
 
-### MaintenanceLog & Expense tables (side by side)
+### 🔧 MaintenanceLog & 💰 Expense tables (side by side)
 
 Service records that drive **In Shop** transitions, and trip-linked expense rollups used by finance.
 
 <table>
   <tr>
-    <td width="50%" valign="top">
-      <p><strong>MaintenanceLog</strong> — service type, cost, date, <code>InShop</code> / <code>Completed</code></p>
+    <td width="50%" valign="top" align="center">
+      <p><strong>MaintenanceLog</strong><br/><sub>service type · cost · date · <code>InShop</code> / <code>Completed</code></sub></p>
       <img src="./public/maintaince_db.png" alt="MaintenanceLog table in pgAdmin" />
     </td>
-    <td width="50%" valign="top">
-      <p><strong>Expense</strong> — toll, other, linked maintenance, total, approval status</p>
+    <td width="50%" valign="top" align="center">
+      <p><strong>Expense</strong><br/><sub>toll · other · linked maint · total · status</sub></p>
       <img src="./public/expense.png" alt="Expense table in pgAdmin" />
     </td>
   </tr>
@@ -603,6 +714,18 @@ Settings allows live edits via `updateRBAC(role, module, access)`. The `can()` h
 
 ## 16. Application Modules
 
+<div align="center">
+
+```text
+┌────────┐   ┌────────┐   ┌────────┐   ┌────────┐   ┌────────┐   ┌────────┐
+│ Login  │ → │  Dash  │ → │ Fleet  │ → │ Trips  │ → │  Shop  │ → │ Finance│
+└────────┘   └────────┘   └────────┘   └────────┘   └────────┘   └────────┘
+     ▲                                                         │
+     └──────────────── RBAC gates every module ◄───────────────┘
+```
+
+</div>
+
 ### 16.1 Login
 
 Split layout: brand story + RBAC role list on the left; credential form on the right. Demo credentials are pre-filled; changing the Role select swaps the email to the matching persona.
@@ -613,7 +736,13 @@ Split layout: brand story + RBAC role list on the left; credential form on the r
 
 **Route:** `/dashboard` · **Primary persona:** Dispatcher  
 
-![Operations Dashboard](./public/dispatch_dashboard.png)
+<p align="center">
+  <img src="https://img.shields.io/badge/Module-Operations_Dashboard-7C3AED?style=for-the-badge" alt="Dashboard module"/>
+</p>
+
+<p align="center">
+  <img src="./public/dispatch_dashboard.png" alt="Operations Dashboard" width="100%"/>
+</p>
 
 #### KPI cards (7)
 
@@ -648,7 +777,13 @@ Changing type/status **synchronously** updates KPI cards, recent trips context, 
 
 **Route:** `/fleet` · **Primary persona:** Fleet Manager (Dispatcher = view)  
 
-![Vehicle Registry](./public/fleet.png)
+<p align="center">
+  <img src="https://img.shields.io/badge/Module-Vehicle_Registry-06B6D4?style=for-the-badge" alt="Fleet module"/>
+</p>
+
+<p align="center">
+  <img src="./public/fleet.png" alt="Vehicle Registry" width="100%"/>
+</p>
 
 #### Fields captured
 
@@ -695,7 +830,13 @@ Seed intentionally includes **John** (expired + Suspended) so judges can prove n
 
 **Route:** `/trips` · **Primary persona:** Dispatcher  
 
-![Trip Dispatcher](./public/dispatch_trip.png)
+<p align="center">
+  <img src="https://img.shields.io/badge/Module-Trip_Dispatcher-FF6B35?style=for-the-badge" alt="Trips module"/>
+</p>
+
+<p align="center">
+  <img src="./public/dispatch_trip.png" alt="Trip Dispatcher" width="100%"/>
+</p>
 
 #### Create Trip form
 
@@ -748,7 +889,13 @@ Search + status filter; cards show route, vehicle, driver, cargo, ETA / odometer
 
 **Route:** `/maintenance`  
 
-![Maintenance](./public/maintainance_dashboard.png)
+<p align="center">
+  <img src="https://img.shields.io/badge/Module-Maintenance-F59E0B?style=for-the-badge" alt="Maintenance module"/>
+</p>
+
+<p align="center">
+  <img src="./public/maintainance_dashboard.png" alt="Maintenance" width="100%"/>
+</p>
 
 #### Log Service Record
 
@@ -772,7 +919,13 @@ Service Log table lists vehicle, service, date, cost, status with CSV export.
 
 **Route:** `/expenses` · **Primary persona:** Financial Analyst  
 
-![Fuel & Expense Management](./public/Expense_dashboard.png)
+<p align="center">
+  <img src="https://img.shields.io/badge/Module-Fuel_%26_Expenses-22C55E?style=for-the-badge" alt="Expenses module"/>
+</p>
+
+<p align="center">
+  <img src="./public/Expense_dashboard.png" alt="Fuel & Expense Management" width="100%"/>
+</p>
 
 #### Fuel Logs
 
@@ -800,7 +953,13 @@ CSV and PDF for both fuel logs and other expenses.
 
 **Route:** `/analytics` · **Primary persona:** Financial Analyst  
 
-![Reports & Analytics](./public/finance_analytics.png)
+<p align="center">
+  <img src="https://img.shields.io/badge/Module-Reports_%26_Analytics-EC4899?style=for-the-badge" alt="Analytics module"/>
+</p>
+
+<p align="center">
+  <img src="./public/finance_analytics.png" alt="Reports & Analytics" width="100%"/>
+</p>
 
 #### KPI strip
 
@@ -1320,4 +1479,24 @@ Hackathon demonstration project. All rights reserved by the authors unless other
 
 ---
 
-**TransitOps Control Tower** — *Smart Transport Operations Platform* · Built for Odoo Hackathon · [Open Live Demo](https://transitops-odoo.vercel.app/)
+<div align="center">
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:06B6D4,50:7C3AED,100:6D28D9&height=140&section=footer&text=TransitOps%20Control%20Tower&fontSize=28&fontColor=ffffff&animation=twinkling&fontAlignY=70" width="100%" alt="TransitOps footer wave"/>
+
+<br/>
+
+**TransitOps Control Tower** — *Smart Transport Operations Platform*
+
+Built for **Odoo Hackathon** · [🚀 Open Live Demo](https://transitops-odoo.vercel.app/)
+
+<br/>
+
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=14&duration=4000&pause=1000&color=A78BFA&center=true&vCenter=true&width=520&lines=Fleet+%C2%B7+Drivers+%C2%B7+Dispatch+%C2%B7+Maintenance+%C2%B7+Finance;Rules+enforced.+Insights+delivered." alt="Footer typing"/>
+
+<br/><br/>
+
+<a href="https://transitops-odoo.vercel.app/">
+  <img src="https://img.shields.io/badge/★_Star_the_demo-Visit_Vercel-6D28D9?style=for-the-badge" alt="Visit demo"/>
+</a>
+
+</div>
