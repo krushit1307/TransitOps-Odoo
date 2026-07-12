@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { StatusPill } from "@/components/status-pill";
@@ -6,8 +5,7 @@ import { useAuth, useData } from "@/lib/store";
 import { can } from "@/lib/rbac";
 import { AlertTriangle, ArrowRight, Download } from "lucide-react";
 import { downloadCSV } from "@/lib/csv";
-
-export default function MaintenancePage() {
+import { toast } from "sonner";export default function MaintenancePage() {
   const user = useAuth((s) => s.user);
   const readOnly = can(user?.role, "fleet") === "view";
   const noAccess = can(user?.role, "fleet") === "none";
@@ -31,7 +29,7 @@ export default function MaintenancePage() {
         {
           key: "vehicleId",
           label: "Vehicle Registration",
-          transform: (vId) => {
+          transform: (vId: string) => {
             const v = vehicles.find((x) => x.id === vId);
             return v ? v.regNo : "Unknown";
           },
@@ -97,7 +95,15 @@ export default function MaintenancePage() {
                 <option value="Completed">Completed</option>
               </select>
             </div>
-            <button disabled={readOnly} onClick={() => { addMaintenance(form); setForm({ ...form, cost: 0 }); }}
+            <button disabled={readOnly} onClick={() => {
+              const res = addMaintenance(form);
+              if (res.ok) {
+                setForm({ ...form, cost: 0 });
+                toast.success("Maintenance record added");
+              } else {
+                toast.error(res.error);
+              }
+            }}
               className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40">
               Save Record
             </button>
