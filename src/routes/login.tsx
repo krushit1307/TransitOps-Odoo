@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 
 import { useEffect, useState } from "react";
-import { Truck, AlertCircle } from "lucide-react";
+import { Truck } from "lucide-react";
 import { useAuth } from "@/lib/store";
 import type { Role } from "@/lib/types";
 import { roleLabel } from "@/lib/rbac";
@@ -12,31 +12,53 @@ export default function LoginPage() {
   const login = useAuth((s) => s.login);
   const user = useAuth((s) => s.user);
   const navigate = useNavigate();
-  const [email, setEmail] = useState("ops@transitops.demo");
-  const [password, setPassword] = useState("demo1234");
-  const [role, setRole] = useState<Role>("Dispatcher");
+  const [email, setEmail] = useState("fleet@transitops.demo");
+  const [password, setPassword] = useState("Transit@123");
+  const [role, setRole] = useState<Role>("FleetManager");
   const [remember, setRemember] = useState(true);
-  const [attempts, setAttempts] = useState(0);
+  
+  // Map of email -> failed attempts
+  const [attemptsMap, setAttemptsMap] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
-  const locked = attempts >= 5;
+  
+  const currentAttempts = attemptsMap[email] || 0;
+  const locked = currentAttempts >= 5;
+
+  const redirects: Record<Role, string> = {
+    FleetManager: "/fleet",
+    Dispatcher: "/dashboard",
+    SafetyOfficer: "/drivers",
+    FinancialAnalyst: "/expenses",
+  };
 
   useEffect(() => {
-    if (user) navigate("/dashboard");
+    if (user) navigate(redirects[user.role] || "/dashboard");
   }, [user, navigate]);
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (locked) return;
+    
     const trimmedEmail = email.trim();
-    if (trimmedEmail.length < 3 || password.length < 3) {
-      const n = attempts + 1;
-      setAttempts(n);
-      setError(n >= 5 ? "Account locked after 5 failed attempts." : "Enter an email/username and password (min 3 characters).");
+    if (trimmedEmail.length === 0 || password.length === 0) {
+      setError("Invalid credentials");
       return;
     }
-    setError(null);
-    login(trimmedEmail.includes("@") ? trimmedEmail : `${trimmedEmail}@transitops.demo`, role);
-    navigate("/dashboard");
+    
+    const res = login(trimmedEmail, password, role);
+    if (res.ok) {
+      setError(null);
+      setAttemptsMap((prev) => ({ ...prev, [trimmedEmail]: 0 }));
+      navigate(redirects[role]);
+    } else {
+      const newAttempts = currentAttempts + 1;
+      setAttemptsMap((prev) => ({ ...prev, [trimmedEmail]: newAttempts }));
+      if (newAttempts >= 5) {
+        setError("Account locked after 5 failed attempts.");
+      } else {
+        setError("Invalid credentials");
+      }
+    }
   };
 
 
@@ -78,63 +100,65 @@ export default function LoginPage() {
 
       {/* Right */}
       <div className="flex items-center justify-center p-6 lg:p-12 bg-surface">
-        <form onSubmit={onSubmit} className="w-full max-w-md">
-          <h1 className="font-display text-2xl font-bold">Sign in to your account</h1>
-          <p className="text-sm text-slate mt-1">Demo credentials are pre-filled — pick a role and click Sign In.</p>
+        <div className="flex flex-col xl:flex-row items-start gap-8 w-full max-w-2xl justify-center">
+          <form onSubmit={onSubmit} className="w-full max-w-md shrink-0">
+            <h1 className="font-display text-2xl font-bold">Sign in to your account</h1>
+            <p className="text-sm text-slate mt-1">Demo credentials are pre-filled — pick a role and click Sign In.</p>
+
+            <div className="mt-6 space-y-4">
+              <div>
+                <label className="label-caps block mb-1.5">Email / Username</label>
+                <input type="text" value={email} onChange={(e) => setEmail(e.target.value)}
+                  className="w-full h-10 rounded-md border border-line bg-canvas px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/50" />
+              </div>
+              <div>
+                <label className="label-caps block mb-1.5">Password</label>
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+                  className="w-full h-10 rounded-md border border-line bg-canvas px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/50" />
+              </div>
+              <div>
+                <label className="label-caps block mb-1.5">Role (RBAC)</label>
+                <select value={role} onChange={(e) => setRole(e.target.value as Role)}
+                  className="w-full h-10 rounded-md border border-line bg-canvas px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/50">
+                  <option value="FleetManager">Fleet Manager</option>
+                  <option value="Dispatcher">Dispatcher</option>
+                  <option value="SafetyOfficer">Safety Officer</option>
+                  <option value="FinancialAnalyst">Financial Analyst</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-between text-sm">
+                <label className="flex items-center gap-2 text-slate">
+                  <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="rounded border-line" />
+                  Remember me
+                </label>
+                <a href="#" className="text-primary hover:underline">Forgot password?</a>
+              </div>
+
+              <button
+                type="submit"
+                disabled={locked}
+                className="w-full h-10 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:brightness-105 disabled:opacity-40 disabled:cursor-not-allowed shadow-[var(--shadow-e2)]"
+              >{locked ? "Locked" : "Sign In"}</button>
+            </div>
+
+            <div className="mt-8 border-t border-line pt-5">
+              <div className="label-caps mb-2">Access is scoped by role after login</div>
+              <ul className="text-xs text-slate space-y-1">
+                <li>Fleet Manager → Fleet, Maintenance</li>
+                <li>Dispatcher → Dashboard, Trips</li>
+                <li>Safety Officer → Drivers, Compliance</li>
+                <li>Financial Analyst → Fuel &amp; Expenses, Analytics</li>
+              </ul>
+            </div>
+          </form>
 
           {error && (
-            <div className="mt-5 flex items-start gap-2 rounded-md border border-danger/40 bg-danger/5 px-3 py-2 text-sm text-danger">
-              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" /> <span>{error}</span>
+            <div className="mt-16 w-64 p-4 border-2 border-dashed border-danger bg-danger/5 text-danger rounded-lg flex flex-col justify-center gap-2 shrink-0">
+              <span className="text-sm font-medium">❌ {error}</span>
             </div>
           )}
-
-          <div className="mt-6 space-y-4">
-            <div>
-              <label className="label-caps block mb-1.5">Email / Username</label>
-              <input type="text" value={email} onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-10 rounded-md border border-line bg-canvas px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/50" />
-            </div>
-            <div>
-              <label className="label-caps block mb-1.5">Password</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-10 rounded-md border border-line bg-canvas px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/50" />
-            </div>
-            <div>
-              <label className="label-caps block mb-1.5">Role (RBAC)</label>
-              <select value={role} onChange={(e) => setRole(e.target.value as Role)}
-                className="w-full h-10 rounded-md border border-line bg-canvas px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/50">
-                <option value="FleetManager">Fleet Manager</option>
-                <option value="Dispatcher">Dispatcher</option>
-                <option value="SafetyOfficer">Safety Officer</option>
-                <option value="FinancialAnalyst">Financial Analyst</option>
-              </select>
-            </div>
-
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center gap-2 text-slate">
-                <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="rounded border-line" />
-                Remember me
-              </label>
-              <a href="#" className="text-primary hover:underline">Forgot password?</a>
-            </div>
-
-            <button
-              type="submit"
-              disabled={locked}
-              className="w-full h-10 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:brightness-105 disabled:opacity-40 disabled:cursor-not-allowed shadow-[var(--shadow-e2)]"
-            >{locked ? "Locked" : "Sign In"}</button>
-          </div>
-
-          <div className="mt-8 border-t border-line pt-5">
-            <div className="label-caps mb-2">Access is scoped by role after login</div>
-            <ul className="text-xs text-slate space-y-1">
-              <li>Fleet Manager → Fleet, Maintenance</li>
-              <li>Dispatcher → Dashboard, Trips</li>
-              <li>Safety Officer → Drivers, Compliance</li>
-              <li>Financial Analyst → Fuel &amp; Expenses, Analytics</li>
-            </ul>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
   );

@@ -4,12 +4,12 @@ import type {
   User, Role, Vehicle, Driver, Trip, MaintenanceLog, FuelLog, Expense, Settings,
 } from "./types";
 import {
-  seedVehicles, seedDrivers, seedTrips, seedMaintenance, seedFuel, seedExpenses, seedSettings,
+  seedUsers, seedVehicles, seedDrivers, seedTrips, seedMaintenance, seedFuel, seedExpenses, seedSettings,
 } from "./mock-data";
 
 interface AuthState {
   user: User | null;
-  login: (email: string, role: Role) => void;
+  login: (email: string, password: string, role: Role) => { ok: boolean; error?: string };
   logout: () => void;
 }
 
@@ -17,9 +17,15 @@ export const useAuth = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      login: (email, role) => {
-        const name = email.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) || "Operator";
-        set({ user: { id: "u1", email, name, role } });
+      login: (email, password, role) => {
+        const found = seedUsers.find(
+          (u) => u.email === email && u.password === password && u.role === role
+        );
+        if (found) {
+          set({ user: { id: found.id, name: found.name, email: found.email, role: found.role } });
+          return { ok: true };
+        }
+        return { ok: false, error: "Invalid credentials" };
       },
       logout: () => set({ user: null }),
     }),

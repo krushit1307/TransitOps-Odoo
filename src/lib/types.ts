@@ -7,6 +7,10 @@ export interface User {
   role: Role;
 }
 
+export interface SeedUser extends User {
+  password?: string;
+}
+
 export type VehicleStatus = "Available" | "OnTrip" | "InShop" | "Retired";
 export interface Vehicle {
   id: string;
@@ -28,7 +32,7 @@ export interface Driver {
   licenseExpiry: string; // ISO
   contact: string;
   tripCompletionPct: number;
-  safetyScore: "Excellent" | "Good" | "Fair" | "Poor";
+  safetyScore: number;
   status: DriverStatus;
 }
 
