@@ -7,6 +7,7 @@ import { can } from "@/lib/rbac";
 import { Plus, AlertTriangle, X, Download } from "lucide-react";
 import type { Vehicle } from "@/lib/types";
 import { downloadCSV } from "@/lib/csv";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function FleetPage() {
   const user = useAuth((s) => s.user);
@@ -79,36 +80,38 @@ export default function FleetPage() {
           className="h-9 rounded-md border border-line bg-surface px-3 text-sm min-w-64" />
       </div>
 
-      <div className="bg-surface border border-line rounded-xl shadow-[var(--shadow-e1)] overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-secondary/50 sticky top-0">
-            <tr className="text-left label-caps">
-              <th className="px-4 py-2.5">Reg. No.</th>
-              <th className="px-4 py-2.5">Name / Model</th>
-              <th className="px-4 py-2.5">Type</th>
-              <th className="px-4 py-2.5 text-right">Capacity</th>
-              <th className="px-4 py-2.5 text-right">Odometer</th>
-              <th className="px-4 py-2.5 text-right">Acq. Cost</th>
-              <th className="px-4 py-2.5">Status</th>
-            </tr>
-          </thead>
-          <tbody>
+      <div className="overflow-hidden rounded-xl border border-line bg-surface">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/50 shadow-[inset_0px_1px_2px_0px_rgba(255,255,255,1),inset_0px_-1px_4px_0px_rgba(0,0,0,0.05)] dark:shadow-[inset_0px_1px_2px_0px_rgba(255,255,255,0.1),inset_0px_-1px_2px_0px_rgba(0,0,0,0.02)]">
+              <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Reg. No.</TableHead>
+              <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Name / Model</TableHead>
+              <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Type</TableHead>
+              <TableHead className="label-caps px-4 py-2.5 text-right font-semibold">Capacity</TableHead>
+              <TableHead className="label-caps px-4 py-2.5 text-right font-semibold">Odometer</TableHead>
+              <TableHead className="label-caps px-4 py-2.5 text-right font-semibold">Acq. Cost</TableHead>
+              <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {rows.map((v) => (
-              <tr key={v.id} className="border-t border-line hover:bg-secondary/30">
-                <td className="px-4 py-3 font-mono text-xs">{v.regNo}</td>
-                <td className="px-4 py-3">{v.nameModel}</td>
-                <td className="px-4 py-3 text-slate">{v.type}</td>
-                <td className="px-4 py-3 text-right font-mono text-xs">{v.maxCapacityKg} kg</td>
-                <td className="px-4 py-3 text-right font-mono text-xs">{v.odometerKm.toLocaleString()} km</td>
-                <td className="px-4 py-3 text-right font-mono text-xs">₹{v.acquisitionCost.toLocaleString()}</td>
-                <td className="px-4 py-3"><StatusPill status={v.status} /></td>
-              </tr>
+              <TableRow key={v.id} className="hover:bg-secondary/30 border-t border-line">
+                <TableCell className="px-4 py-3 font-mono text-xs">{v.regNo}</TableCell>
+                <TableCell className="px-4 py-3">{v.nameModel}</TableCell>
+                <TableCell className="px-4 py-3 text-slate">{v.type}</TableCell>
+                <TableCell className="px-4 py-3 text-right font-mono text-xs">{v.maxCapacityKg} kg</TableCell>
+                <TableCell className="px-4 py-3 text-right font-mono text-xs">{v.odometerKm.toLocaleString()} km</TableCell>
+                <TableCell className="px-4 py-3 text-right font-mono text-xs">₹{v.acquisitionCost.toLocaleString()}</TableCell>
+                <TableCell className="px-4 py-3"><StatusPill status={v.status} /></TableCell>
+              </TableRow>
             ))}
             {rows.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-slate text-sm">No vehicles match those filters.</td></tr>
+              <TableRow>
+                <TableCell colSpan={7} className="px-4 py-8 text-center text-slate text-sm">No vehicles match those filters.</TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       <div className="mt-4 flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-[oklch(0.5_0.16_50)]">

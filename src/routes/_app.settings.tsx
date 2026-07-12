@@ -5,6 +5,7 @@ import { useAuth, useData } from "@/lib/store";
 import { roleLabel } from "@/lib/rbac";
 import type { Role } from "@/lib/types";
 import { Check, Eye, Minus } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function SettingsPage() {
   const { settings, updateSettings, rbacMatrix, updateRBAC } = useData();
@@ -34,7 +35,7 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <PageHeader title="Settings & RBAC" subtitle="Depot configuration and role-based access." />
+      <PageHeader title="Settings &amp; RBAC" subtitle="Depot configuration and role-based access." />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-surface border border-line rounded-xl shadow-[var(--shadow-e1)] p-5">
@@ -71,37 +72,39 @@ export default function SettingsPage() {
           <div className="bg-surface border border-line rounded-xl shadow-[var(--shadow-e1)] p-5">
             <h3 className="font-display font-semibold mb-1">Role-Based Access (RBAC)</h3>
             <p className="text-xs text-slate mb-4">Cells reflect the access level each role has to each module. Click a cell to toggle access level.</p>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="label-caps text-left">
-                  <th className="pb-2">Role</th>
-                  {modules.map((m) => <th key={m.key} className="pb-2 text-center">{m.label}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {roles.map((r) => (
-                  <tr key={r} className="border-t border-line">
-                    <td className="py-3 font-medium">{roleLabel[r]}</td>
-                    {modules.map((m) => {
-                      const acc = rbacMatrix[r]?.[m.key] || "none";
-                      return (
-                        <td key={m.key} className="py-2 text-center">
-                          <button
-                            onClick={() => cycleAccess(r, m.key)}
-                            className="h-8 w-16 mx-auto rounded-md hover:bg-secondary/80 focus:outline-none focus:ring-1 focus:ring-primary/30 flex items-center justify-center transition-all cursor-pointer"
-                            title={`Click to toggle ${roleLabel[r]} access for ${m.label}`}
-                          >
-                            {acc === "full" && <Check className="h-4 w-4 text-success" />}
-                            {acc === "view" && <span className="text-xs text-info font-medium">view</span>}
-                            {acc === "none" && <Minus className="h-4 w-4 text-slate/50" />}
-                          </button>
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="overflow-hidden rounded-xl border border-line mt-4 bg-surface">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50 shadow-[inset_0px_1px_2px_0px_rgba(255,255,255,1),inset_0px_-1px_4px_0px_rgba(0,0,0,0.05)] dark:shadow-[inset_0px_1px_2px_0px_rgba(255,255,255,0.1),inset_0px_-1px_2px_0px_rgba(0,0,0,0.02)]">
+                    <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Role</TableHead>
+                    {modules.map((m) => <TableHead key={m.key} className="label-caps px-4 py-2.5 text-center font-semibold">{m.label}</TableHead>)}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {roles.map((r) => (
+                    <TableRow key={r} className="border-t border-line hover:bg-secondary/30">
+                      <TableCell className="px-4 py-3 font-medium">{roleLabel[r]}</TableCell>
+                      {modules.map((m) => {
+                        const acc = rbacMatrix[r]?.[m.key] || "none";
+                        return (
+                          <TableCell key={m.key} className="py-2 text-center">
+                            <button
+                              onClick={() => cycleAccess(r, m.key)}
+                              className="h-8 w-16 mx-auto rounded-md hover:bg-secondary/80 focus:outline-none focus:ring-1 focus:ring-primary/30 flex items-center justify-center transition-all cursor-pointer"
+                              title={`Click to toggle ${roleLabel[r]} access for ${m.label}`}
+                            >
+                              {acc === "full" && <Check className="h-4 w-4 text-success" />}
+                              {acc === "view" && <span className="text-xs text-info font-medium">view</span>}
+                              {acc === "none" && <Minus className="h-4 w-4 text-slate/50" />}
+                            </button>
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
             <div className="mt-3 flex items-center gap-4 text-xs text-slate">
               <span className="flex items-center gap-1"><Check className="h-3.5 w-3.5 text-success" /> Full</span>
               <span className="flex items-center gap-1"><Eye className="h-3.5 w-3.5 text-info" /> View</span>

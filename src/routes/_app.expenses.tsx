@@ -6,6 +6,7 @@ import { useAuth, useData } from "@/lib/store";
 import { can } from "@/lib/rbac";
 import { Plus, X, Download } from "lucide-react";
 import { downloadCSV } from "@/lib/csv";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function ExpensesPage() {
   const user = useAuth((s) => s.user);
@@ -70,7 +71,7 @@ export default function ExpensesPage() {
   return (
     <div>
       <PageHeader
-        title="Fuel & Expense Management"
+        title="Fuel &amp; Expense Management"
         subtitle="Fuel consumption, tolls, and linked maintenance costs — rolled up automatically."
         actions={
           <div className="flex items-center gap-2">
@@ -100,62 +101,66 @@ export default function ExpensesPage() {
 
       <div className="bg-surface border border-line rounded-xl shadow-[var(--shadow-e1)] overflow-hidden mb-4">
         <div className="px-5 py-4 border-b border-line"><h3 className="font-display font-semibold">Fuel Logs</h3></div>
-        <table className="w-full text-sm">
-          <thead className="bg-secondary/50">
-            <tr className="text-left label-caps">
-              <th className="px-4 py-2.5">Vehicle</th>
-              <th className="px-4 py-2.5">Date</th>
-              <th className="px-4 py-2.5 text-right">Liters</th>
-              <th className="px-4 py-2.5 text-right">Fuel Cost</th>
-            </tr>
-          </thead>
-          <tbody>
-            {fuel.map((f) => {
-              const v = vehicles.find((x) => x.id === f.vehicleId);
-              return (
-                <tr key={f.id} className="border-t border-line hover:bg-secondary/30">
-                  <td className="px-4 py-3 font-mono text-xs">{v?.regNo}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-slate">{f.date}</td>
-                  <td className="px-4 py-3 text-right font-mono text-xs">{f.liters} L</td>
-                  <td className="px-4 py-3 text-right font-mono text-xs">₹{f.cost.toLocaleString()}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="overflow-hidden rounded-xl border border-line m-4 bg-surface">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50 shadow-[inset_0px_1px_2px_0px_rgba(255,255,255,1),inset_0px_-1px_4px_0px_rgba(0,0,0,0.05)] dark:shadow-[inset_0px_1px_2px_0px_rgba(255,255,255,0.1),inset_0px_-1px_2px_0px_rgba(0,0,0,0.02)]">
+                <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Vehicle</TableHead>
+                <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Date</TableHead>
+                <TableHead className="label-caps px-4 py-2.5 text-right font-semibold">Liters</TableHead>
+                <TableHead className="label-caps px-4 py-2.5 text-right font-semibold">Fuel Cost</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {fuel.map((f) => {
+                const v = vehicles.find((x) => x.id === f.vehicleId);
+                return (
+                  <TableRow key={f.id} className="hover:bg-secondary/30 border-t border-line">
+                    <TableCell className="px-4 py-3 font-mono text-xs">{v?.regNo}</TableCell>
+                    <TableCell className="px-4 py-3 font-mono text-xs text-slate">{f.date}</TableCell>
+                    <TableCell className="px-4 py-3 text-right font-mono text-xs">{f.liters} L</TableCell>
+                    <TableCell className="px-4 py-3 text-right font-mono text-xs">₹{f.cost.toLocaleString()}</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       <div className="bg-surface border border-line rounded-xl shadow-[var(--shadow-e1)] overflow-hidden">
         <div className="px-5 py-4 border-b border-line"><h3 className="font-display font-semibold">Other Expenses (Toll / Misc)</h3></div>
-        <table className="w-full text-sm">
-          <thead className="bg-secondary/50">
-            <tr className="text-left label-caps">
-              <th className="px-4 py-2.5">Trip</th>
-              <th className="px-4 py-2.5">Vehicle</th>
-              <th className="px-4 py-2.5 text-right">Toll</th>
-              <th className="px-4 py-2.5 text-right">Other</th>
-              <th className="px-4 py-2.5 text-right">Maint. (Linked)</th>
-              <th className="px-4 py-2.5 text-right">Total</th>
-              <th className="px-4 py-2.5">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {expenses.map((e) => {
-              const v = vehicles.find((x) => x.id === e.vehicleId);
-              return (
-                <tr key={e.id} className="border-t border-line hover:bg-secondary/30">
-                  <td className="px-4 py-3 font-mono text-xs">{e.tripId}</td>
-                  <td className="px-4 py-3 font-mono text-xs">{v?.regNo}</td>
-                  <td className="px-4 py-3 text-right font-mono text-xs">₹{e.toll}</td>
-                  <td className="px-4 py-3 text-right font-mono text-xs">₹{e.other}</td>
-                  <td className="px-4 py-3 text-right font-mono text-xs">₹{e.maintenanceLinkedCost}</td>
-                  <td className="px-4 py-3 text-right font-mono text-sm font-semibold">₹{e.total.toLocaleString()}</td>
-                  <td className="px-4 py-3"><StatusPill status={e.status} /></td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="overflow-hidden rounded-xl border border-line m-4 bg-surface">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50 shadow-[inset_0px_1px_2px_0px_rgba(255,255,255,1),inset_0px_-1px_4px_0px_rgba(0,0,0,0.05)] dark:shadow-[inset_0px_1px_2px_0px_rgba(255,255,255,0.1),inset_0px_-1px_2px_0px_rgba(0,0,0,0.02)]">
+                <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Trip</TableHead>
+                <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Vehicle</TableHead>
+                <TableHead className="label-caps px-4 py-2.5 text-right font-semibold">Toll</TableHead>
+                <TableHead className="label-caps px-4 py-2.5 text-right font-semibold">Other</TableHead>
+                <TableHead className="label-caps px-4 py-2.5 text-right font-semibold">Maint. (Linked)</TableHead>
+                <TableHead className="label-caps px-4 py-2.5 text-right font-semibold">Total</TableHead>
+                <TableHead className="label-caps px-4 py-2.5 text-left font-semibold">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {expenses.map((e) => {
+                const v = vehicles.find((x) => x.id === e.vehicleId);
+                return (
+                  <TableRow key={e.id} className="hover:bg-secondary/30 border-t border-line">
+                    <TableCell className="px-4 py-3 font-mono text-xs">{e.tripId}</TableCell>
+                    <TableCell className="px-4 py-3 font-mono text-xs">{v?.regNo}</TableCell>
+                    <TableCell className="px-4 py-3 text-right font-mono text-xs">₹{e.toll}</TableCell>
+                    <TableCell className="px-4 py-3 text-right font-mono text-xs">₹{e.other}</TableCell>
+                    <TableCell className="px-4 py-3 text-right font-mono text-xs">₹{e.maintenanceLinkedCost}</TableCell>
+                    <TableCell className="px-4 py-3 text-right font-mono text-sm font-semibold">₹{e.total.toLocaleString()}</TableCell>
+                    <TableCell className="px-4 py-3"><StatusPill status={e.status} /></TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       <div className="mt-4 flex items-center justify-end gap-4 bg-primary/8 border border-primary/30 rounded-md px-5 py-3">

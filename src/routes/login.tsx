@@ -118,7 +118,17 @@ export default function LoginPage() {
               </div>
               <div>
                 <label className="label-caps block mb-1.5">Role (RBAC)</label>
-                <select value={role} onChange={(e) => setRole(e.target.value as Role)}
+                <select value={role} onChange={(e) => {
+                  const selectedRole = e.target.value as Role;
+                  setRole(selectedRole);
+                  const emails = {
+                    FleetManager: "fleet@transitops.demo",
+                    Dispatcher: "dispatch@transitops.demo",
+                    SafetyOfficer: "safety@transitops.demo",
+                    FinancialAnalyst: "finance@transitops.demo",
+                  };
+                  setEmail(emails[selectedRole]);
+                }}
                   className="w-full h-10 rounded-md border border-line bg-canvas px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring/50">
                   <option value="FleetManager">Fleet Manager</option>
                   <option value="Dispatcher">Dispatcher</option>
